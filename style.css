@@ -1,0 +1,376 @@
+:root {
+    --bg-color: #0b0f19;
+    --primary-color: #00f0ff;
+    --primary-glow: rgba(0, 240, 255, 0.3);
+    --secondary-color: #1e293b;
+    --text-color: #f8fafc;
+    --text-muted: #94a3b8;
+    --glass-bg: rgba(30, 41, 59, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --input-bg: rgba(15, 23, 42, 0.6);
+    --success-color: #10b981;
+    --error-color: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.08), transparent 25%);
+    background-size: cover;
+    background-attachment: fixed;
+    /* Hide scrollbar but keep functionality */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.header-content h1 {
+    font-size: 24px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff, var(--primary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+}
+
+.header-content p {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.icon-container {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 240, 255, 0.1);
+    border-radius: 14px;
+    color: var(--primary-color);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.icon-container .material-symbols-outlined {
+    font-size: 28px;
+}
+
+/* Form Container */
+.form-container {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 28px 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Action Buttons (Voice & OCR) */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--glass-border);
+    background: rgba(15, 23, 42, 0.6);
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.action-btn .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.voice-btn { color: #10b981; }
+.voice-btn:hover, .action-btn.voice-btn.active { 
+    background: rgba(16, 185, 129, 0.15); 
+    border-color: #10b981; 
+}
+
+.ocr-btn { color: #00f0ff; }
+.ocr-btn:hover, .action-btn.ocr-btn.active { 
+    background: rgba(0, 240, 255, 0.15); 
+    border-color: #00f0ff; 
+}
+
+.action-btn.active {
+    animation: pulseActive 1.5s infinite;
+}
+
+@keyframes pulseActive {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.input-group label .icon {
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+.input-group input {
+    background: var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.15);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+/* Placeholder color styling */
+.input-group input::placeholder {
+    color: rgba(148, 163, 184, 0.4);
+}
+
+/* Fix Date Input specific styling on WebKit iOS */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Segment Group */
+.segment-group {
+    display: flex;
+    background: var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 6px;
+    gap: 6px;
+}
+
+.segment {
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+}
+
+.segment input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.segment span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-radius: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.segment input:checked + span {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), transparent);
+    background-color: var(--primary-color);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(0, 240, 255, 0.2);
+    font-weight: 600;
+}
+
+/* Submit Button */
+.submit-btn {
+    margin-top: 10px;
+    background: linear-gradient(135deg, #00f0ff, #0088ff);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 240, 255, 0.4);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* Spinner */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    border-top-color: #000;
+    animation: spin 1s ease-in-out infinite;
+}
+
+.spinner.hide {
+    display: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Button Loading State */
+.submit-btn.loading {
+    background: #475569;
+    color: rgba(255,255,255,0.8);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.submit-btn.loading .spinner {
+    border-top-color: #fff;
+    border-color: rgba(255,255,255,0.2);
+    border-top-color: #fff;
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--glass-bg);
+    border: 1px solid var(--success-color);
+    backdrop-filter: blur(10px);
+    padding: 14px 24px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 500;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.toast.error {
+    border-color: var(--error-color);
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.2);
+}
+
+.toast.error .toast-icon {
+    color: var(--error-color);
+}
+
+.toast-icon {
+    color: var(--success-color);
+    font-size: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-height: 700px) {
+    .app-container {
+        padding: 16px;
+    }
+    .form-container {
+        padding: 20px 16px;
+    }
+    .input-group input {
+        padding: 12px 14px;
+    }
+}

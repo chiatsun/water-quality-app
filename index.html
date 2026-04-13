@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>水質日常紀錄</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <!-- Icons (Material Symbols) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>水質紀錄</h1>
+                <p>每日測量資料同步</p>
+            </div>
+            <div class="icon-container">
+                <span class="material-symbols-outlined">water_drop</span>
+            </div>
+        </header>
+
+        <!-- Main Form -->
+        <main class="form-container">
+            
+            <!-- Action Buttons for Smart Input -->
+            <div class="action-buttons">
+                <button type="button" id="voiceBtn" class="action-btn voice-btn">
+                    <span class="material-symbols-outlined">mic</span>
+                    <span>語音填寫</span>
+                </button>
+                <button type="button" id="ocrBtn" class="action-btn ocr-btn">
+                    <span class="material-symbols-outlined">photo_camera</span>
+                    <span>拍照 (OCR)</span>
+                </button>
+                <!-- Hidden file input for OCR -->
+                <input type="file" accept="image/*" capture="environment" id="ocrInput" style="display:none;">
+            </div>
+
+            <form id="waterQualityForm">
+                
+                <!-- Date -->
+                <div class="input-group">
+                    <label for="dateField">
+                        <span class="material-symbols-outlined icon">calendar_month</span> 日期 (Date)
+                    </label>
+                    <input type="date" id="dateField" name="date" required>
+                </div>
+
+                <!-- Area -->
+                <div class="input-group">
+                    <label>
+                        <span class="material-symbols-outlined icon">location_on</span> 測量區域
+                    </label>
+                    <div class="segment-group">
+                        <label class="segment">
+                            <input type="radio" name="area" value="生理區" required>
+                            <span>生理區</span>
+                        </label>
+                        <label class="segment">
+                            <input type="radio" name="area" value="魚病區" required>
+                            <span>魚病區</span>
+                        </label>
+                        <label class="segment">
+                            <input type="radio" name="area" value="基轉區" required>
+                            <span>基轉區</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Temperature -->
+                <div class="input-group">
+                    <label for="tempField">
+                        <span class="material-symbols-outlined icon">thermostat</span> 溫度 (℃)
+                    </label>
+                    <input type="number" id="tempField" name="temperature" step="0.01" inputmode="decimal" placeholder="例如: 25.40" required>
+                </div>
+
+                <!-- pH -->
+                <div class="input-group">
+                    <label for="phField">
+                        <span class="material-symbols-outlined icon">science</span> pH 值
+                    </label>
+                    <input type="number" id="phField" name="ph" step="0.01" inputmode="decimal" placeholder="例如: 7.20" required>
+                </div>
+
+                <!-- Dissolved Oxygen (DO) -->
+                <div class="input-group">
+                    <label for="doField">
+                        <span class="material-symbols-outlined icon">air</span> 溶氧 (DO) ppm
+                    </label>
+                    <input type="number" id="doField" name="do" step="0.01" inputmode="decimal" placeholder="例如: 6.50" required>
+                </div>
+
+                <!-- Salinity (PSU) -->
+                <div class="input-group">
+                    <label for="salinityField">
+                        <span class="material-symbols-outlined icon">grain</span> 鹽度 (PSU)
+                    </label>
+                    <input type="number" id="salinityField" name="salinity" step="0.01" inputmode="decimal" placeholder="例如: 32.50" required>
+                </div>
+
+                <!-- ORP (mV) -->
+                <div class="input-group">
+                    <label for="orpField">
+                        <span class="material-symbols-outlined icon">electric_bolt</span> 氧化還原 (ORP) mV
+                    </label>
+                    <input type="number" id="orpField" name="orp" step="0.1" inputmode="decimal" placeholder="例如: 250.0" required>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    <span class="btn-text">送出紀錄</span>
+                    <span class="material-symbols-outlined btn-icon">send</span>
+                    <!-- Loading Spinner -->
+                    <div class="spinner hide"></div>
+                </button>
+            </form>
+        </main>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="toast">
+            <span class="material-symbols-outlined toast-icon">check_circle</span>
+            <span class="toast-message">紀錄成功！</span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

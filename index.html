@@ -125,6 +125,34 @@
             <span class="material-symbols-outlined toast-icon">check_circle</span>
             <span class="toast-message">紀錄成功！</span>
         </div>
+
+        <!-- Voice Text Fallback Modal -->
+        <div id="voiceModal" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <span class="material-symbols-outlined modal-icon">edit_note</span>
+                    <h3>快速文字輸入</h3>
+                </div>
+                <p class="modal-desc">依序輸入數值（空格分隔）：</p>
+                <div class="modal-hint">
+                    <span class="hint-label">溫度</span>
+                    <span class="hint-label">pH</span>
+                    <span class="hint-label">鹽度</span>
+                    <span class="hint-label">ORP</span>
+                </div>
+                <input type="text" id="voiceTextInput" inputmode="decimal"
+                    placeholder="例：26.5 7.2 32.5 250">
+                <p class="modal-desc" style="margin-top:8px; font-size:12px; opacity:0.6">
+                    或輸入帶標籤文字：「溫度26.5 pH7.2 鹽度32.5 氧化250」
+                </p>
+                <div class="modal-actions">
+                    <button id="voiceModalCancel" type="button" class="modal-btn cancel-btn">取消</button>
+                    <button id="voiceModalSubmit" type="button" class="modal-btn submit-modal-btn">
+                        <span class="material-symbols-outlined">check</span> 填入表單
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

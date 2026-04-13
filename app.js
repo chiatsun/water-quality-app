@@ -102,6 +102,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceBtn = document.getElementById('voiceBtn');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+    // ── 文字輸入 fallback modal ──
+    const voiceModal = document.getElementById('voiceModal');
+    const voiceTextInput = document.getElementById('voiceTextInput');
+    document.getElementById('voiceModalCancel').addEventListener('click', () => {
+        voiceModal.classList.remove('show');
+    });
+    document.getElementById('voiceModalSubmit').addEventListener('click', () => {
+        const raw = voiceTextInput.value.trim();
+        if (!raw) return;
+        parseVoiceInput(raw);
+        showToast('已填入表單');
+        voiceModal.classList.remove('show');
+        voiceTextInput.value = '';
+    });
+    // 點遮罩關閉
+    voiceModal.addEventListener('click', (e) => {
+        if (e.target === voiceModal) voiceModal.classList.remove('show');
+    });
+
+    function openVoiceFallback() {
+        voiceModal.classList.add('show');
+        setTimeout(() => voiceTextInput.focus(), 300);
+    }
+
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.lang = 'zh-TW';
@@ -110,32 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let isListening = false;
 
-        voiceBtn.addEventListener('click', async () => {
-            if (isListening) return; // 防止重複點擊
-
-            // ── 先用 getUserMedia 喚醒麥克風（解決 MIUI / Android Chrome 權限攔截問題）──
-            let micStream = null;
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (err) {
-                console.error('getUserMedia 失敗:', err);
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    showToast('麥克風權限被拒絕，請至系統設定 → 應用程式 → Chrome → 權限，開啟麥克風', true);
-                } else {
-                    showToast('無法存取麥克風：' + err.message, true);
-                }
-                return;
-            }
-
-            // 取得授權後立即關閉 stream（由 SpeechRecognition 接手）
-            micStream.getTracks().forEach(track => track.stop());
-
-            // 啟動語音辨識
+        voiceBtn.addEventListener('click', () => {
+            if (isListening) return;
             try {
                 recognition.start();
             } catch (err) {
                 console.warn('recognition.start() error:', err);
-                showToast('語音辨識啟動失敗，請重試', true);
+                openVoiceFallback();
                 return;
             }
             isListening = true;
@@ -152,16 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.onerror = (event) => {
             console.error('語音辨識錯誤:', event.error);
-            const errorMessages = {
-                'not-allowed': '麥克風權限被拒絕，請在瀏覽器設定中允許麥克風',
-                'no-speech': '沒有偵測到聲音，請再試一次',
-                'network': '網路錯誤，語音辨識需要網路連線',
-                'audio-capture': '找不到麥克風裝置',
-                'service-not-allowed': '語音服務不可用（HTTPS 環境限制）',
-                'aborted': '語音辨識已取消',
-            };
-            const msg = errorMessages[event.error] || `語音辨識失敗 (${event.error})`;
-            showToast(msg, true);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                // MIUI / 權限問題 → 改用文字輸入
+                openVoiceFallback();
+            } else {
+                const errorMessages = {
+                    'no-speech'      : '沒有偵測到聲音，請重試',
+                    'network'        : '網路錯誤，語音辨識需要網路連線',
+                    'audio-capture'  : '找不到麥克風裝置',
+                    'aborted'        : '語音辨識已取消',
+                };
+                showToast(errorMessages[event.error] || `語音辨識失敗 (${event.error})`, true);
+            }
         };
 
         recognition.onend = () => {
@@ -170,8 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
             voiceBtn.querySelector('span:last-child').textContent = '語音填寫';
         };
     } else {
-        voiceBtn.style.display = 'none';
-        console.warn("此瀏覽器不支援語音辨識（需使用 Chrome 或支援 WebKit 的瀏覽器）");
+        // 瀏覽器完全不支援語音辨識 → 直接換成文字輸入按鈕
+        voiceBtn.querySelector('span:last-child').textContent = '文字輸入';
+        voiceBtn.querySelector('.material-symbols-outlined').textContent = 'edit_note';
+        voiceBtn.addEventListener('click', openVoiceFallback);
     }
 
     function parseVoiceInput(text) {

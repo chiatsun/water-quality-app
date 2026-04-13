@@ -154,9 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ph = parseNum(/(?:ph|酸鹼|酸|批)[^\d]*(\d+\.?\d*)/i);
         if (ph) document.getElementById('phField').value = parseFloat(ph).toFixed(2);
 
-        // 溶氧
-        const doVal = parseNum(/(?:溶氧|氧氣|氧|do)[^\d]*(\d+\.?\d*)/i);
-        if (doVal) document.getElementById('doField').value = parseFloat(doVal).toFixed(2);
+
 
         // 鹽度
         const sal = parseNum(/(?:鹽度|鹽)[^\d]*(\d+\.?\d*)/);
@@ -256,9 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const phMatch = t.match(/(\d+\.\d+)\s*(?:ph)/) || t.match(/(?:ph)\s*:?\s*(\d+\.\d+)/);
             if (phMatch) { document.getElementById('phField').value = parseFloat(phMatch[1]).toFixed(2); parsedCount++; }
 
-            // 溶氧 DO: 專門抓 ppm (避免抓到 %DO 的 28.0)
-            const doMatch = t.match(/(\d+\.\d+)\s*(?:ppmdo|ppm\s*do|ppm|mgl|mg\/l)/) || t.match(/(?:do|mgl|ppm)\s*:?\s*(\d+\.\d+)/);
-            if (doMatch) { document.getElementById('doField').value = parseFloat(doMatch[1]).toFixed(2); parsedCount++; }
+
 
             // 鹽度 Salinity: 支援 "0.03psu", "0.03 psu"
             const salMatch = t.match(/(\d+\.\d+)\s*(?:psu|ppt|sal)/) || t.match(/(?:sal|psu|ppt)\s*:?\s*(\d+\.\d+)/);

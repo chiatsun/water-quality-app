@@ -108,8 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.continuous = false;
         recognition.interimResults = false;
 
+        let isListening = false;
+
         voiceBtn.addEventListener('click', () => {
-            recognition.start();
+            if (isListening) return; // 防止重複點擊
+            try {
+                recognition.start();
+            } catch (err) {
+                console.warn('recognition.start() error:', err);
+                showToast('語音辨識啟動失敗，請重試', true);
+                return;
+            }
+            isListening = true;
             voiceBtn.classList.add('active');
             voiceBtn.querySelector('span:last-child').textContent = '聆聽中...';
             showToast('請開始說話，例如：「基轉區，溫度26.5」');
@@ -121,17 +131,28 @@ document.addEventListener('DOMContentLoaded', () => {
             parseVoiceInput(text);
         };
 
-        recognition.onspeechend = () => {
-            recognition.stop();
+        recognition.onerror = (event) => {
+            console.error('語音辨識錯誤:', event.error);
+            const errorMessages = {
+                'not-allowed': '麥克風權限被拒絕，請在瀏覽器設定中允許麥克風',
+                'no-speech': '沒有偵測到聲音，請再試一次',
+                'network': '網路錯誤，語音辨識需要網路連線',
+                'audio-capture': '找不到麥克風裝置',
+                'service-not-allowed': '語音服務不可用（HTTPS 環境限制）',
+                'aborted': '語音辨識已取消',
+            };
+            const msg = errorMessages[event.error] || `語音辨識失敗 (${event.error})`;
+            showToast(msg, true);
         };
 
         recognition.onend = () => {
+            isListening = false;
             voiceBtn.classList.remove('active');
             voiceBtn.querySelector('span:last-child').textContent = '語音填寫';
         };
     } else {
         voiceBtn.style.display = 'none';
-        console.warn("此瀏覽器不支援語音辨識");
+        console.warn("此瀏覽器不支援語音辨識（需使用 Chrome 或支援 WebKit 的瀏覽器）");
     }
 
     function parseVoiceInput(text) {

@@ -133,6 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.interimResults = false;
 
         let isListening = false;
+        let gotResult   = false;   // 追蹤是否有辨識結果
+        let safeTimeout = null;    // 安全 timeout（靜默失敗保護）
 
         voiceBtn.addEventListener('click', () => {
             if (isListening) return;
@@ -144,12 +146,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             isListening = true;
+            gotResult   = false;
             voiceBtn.classList.add('active');
             voiceBtn.querySelector('span:last-child').textContent = '聆聽中...';
             showToast('請開始說話，例如：「基轉區，溫度26.5」');
+
+            // 安全 timeout：9 秒無結果視為靜默失敗
+            safeTimeout = setTimeout(() => {
+                if (isListening && !gotResult) {
+                    try { recognition.stop(); } catch(_) {}
+                    openVoiceFallback();
+                }
+            }, 9000);
         });
 
         recognition.onresult = (event) => {
+            gotResult = true;
+            clearTimeout(safeTimeout);
             const text = event.results[0][0].transcript;
             showToast(`語音解析：${text}`);
             parseVoiceInput(text);
@@ -157,24 +170,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.onerror = (event) => {
             console.error('語音辨識錯誤:', event.error);
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                // MIUI / 權限問題 → 改用文字輸入
-                openVoiceFallback();
-            } else {
-                const errorMessages = {
-                    'no-speech'      : '沒有偵測到聲音，請重試',
-                    'network'        : '網路錯誤，語音辨識需要網路連線',
-                    'audio-capture'  : '找不到麥克風裝置',
-                    'aborted'        : '語音辨識已取消',
-                };
-                showToast(errorMessages[event.error] || `語音辨識失敗 (${event.error})`, true);
-            }
+            clearTimeout(safeTimeout);
+            // 所有錯誤統一開啟文字輸入 fallback
+            openVoiceFallback();
         };
 
         recognition.onend = () => {
+            clearTimeout(safeTimeout);
             isListening = false;
             voiceBtn.classList.remove('active');
             voiceBtn.querySelector('span:last-child').textContent = '語音填寫';
+            // 結束但沒有取得結果 → 靜默失敗（MIUI Chrome 常見情況）
+            if (!gotResult) {
+                openVoiceFallback();
+            }
         };
     } else {
         // 瀏覽器完全不支援語音辨識 → 直接換成文字輸入按鈕

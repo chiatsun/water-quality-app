@@ -110,8 +110,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let isListening = false;
 
-        voiceBtn.addEventListener('click', () => {
+        voiceBtn.addEventListener('click', async () => {
             if (isListening) return; // 防止重複點擊
+
+            // ── 先用 getUserMedia 喚醒麥克風（解決 MIUI / Android Chrome 權限攔截問題）──
+            let micStream = null;
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                console.error('getUserMedia 失敗:', err);
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showToast('麥克風權限被拒絕，請至系統設定 → 應用程式 → Chrome → 權限，開啟麥克風', true);
+                } else {
+                    showToast('無法存取麥克風：' + err.message, true);
+                }
+                return;
+            }
+
+            // 取得授權後立即關閉 stream（由 SpeechRecognition 接手）
+            micStream.getTracks().forEach(track => track.stop());
+
+            // 啟動語音辨識
             try {
                 recognition.start();
             } catch (err) {

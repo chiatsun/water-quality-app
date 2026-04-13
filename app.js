@@ -129,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 取消按鈕
     document.getElementById('voiceModalCancel').addEventListener('click', () => {
+        stopRecognition();
         voiceModal.classList.remove('show');
     });
 
@@ -149,7 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 點遮罩關閉
     voiceModal.addEventListener('click', (e) => {
-        if (e.target === voiceModal) voiceModal.classList.remove('show');
+        if (e.target === voiceModal) {
+            stopRecognition();
+            voiceModal.classList.remove('show');
+        }
     });
 
     function openVoiceFallback() {
@@ -158,71 +162,58 @@ document.addEventListener('DOMContentLoaded', () => {
         // 開啟後不自動聚焦，讓使用者先點標籤按鈕
     }
 
+    // ── 語音辨識（背景嘗試） ──
+    let recognition = null;
+    let isListening = false;
+
+    function stopRecognition() {
+        if (recognition && isListening) {
+            try { recognition.stop(); } catch (_) {}
+        }
+    }
+
     if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+        recognition = new SpeechRecognition();
         recognition.lang = 'zh-TW';
         recognition.continuous = false;
         recognition.interimResults = false;
 
-        let isListening = false;
-        let gotResult   = false;   // 追蹤是否有辨識結果
-        let safeTimeout = null;    // 安全 timeout（靜默失敗保護）
-
-        voiceBtn.addEventListener('click', () => {
-            if (isListening) return;
-            try {
-                recognition.start();
-            } catch (err) {
-                console.warn('recognition.start() error:', err);
-                openVoiceFallback();
-                return;
-            }
-            isListening = true;
-            gotResult   = false;
-            voiceBtn.classList.add('active');
-            voiceBtn.querySelector('span:last-child').textContent = '聆聽中...';
-            showToast('請開始說話，例如：「基轉區，溫度26.5」');
-
-            // 安全 timeout：9 秒無結果視為靜默失敗
-            safeTimeout = setTimeout(() => {
-                if (isListening && !gotResult) {
-                    try { recognition.stop(); } catch(_) {}
-                    openVoiceFallback();
-                }
-            }, 9000);
-        });
-
         recognition.onresult = (event) => {
-            gotResult = true;
-            clearTimeout(safeTimeout);
+            isListening = false;
             const text = event.results[0][0].transcript;
-            showToast(`語音解析：${text}`);
-            parseVoiceInput(text);
+            // 語音成功 → 填入輸入框，使用者可再確認
+            voiceTextInput.value = text;
+            voiceTextInput.placeholder = '點上方按鈕後輸入數值';
+            showToast(`🎙 語音：${text}`);
         };
 
         recognition.onerror = (event) => {
-            console.error('語音辨識錯誤:', event.error);
-            clearTimeout(safeTimeout);
-            // 所有錯誤統一開啟文字輸入 fallback
-            openVoiceFallback();
+            console.warn('語音辨識錯誤:', event.error);
+            isListening = false;
+            voiceTextInput.placeholder = '點上方按鈕後輸入數值';
         };
 
         recognition.onend = () => {
-            clearTimeout(safeTimeout);
             isListening = false;
-            voiceBtn.classList.remove('active');
-            voiceBtn.querySelector('span:last-child').textContent = '語音填寫';
-            // 結束但沒有取得結果 → 靜默失敗（MIUI Chrome 常見情況）
-            if (!gotResult) {
-                openVoiceFallback();
-            }
+            voiceTextInput.placeholder = '點上方按鈕後輸入數值';
         };
-    } else {
-        // 瀏覽器完全不支援語音辨識 → 直接換成文字輸入按鈕
-        voiceBtn.querySelector('span:last-child').textContent = '文字輸入';
-        voiceBtn.querySelector('.material-symbols-outlined').textContent = 'edit_note';
-        voiceBtn.addEventListener('click', openVoiceFallback);
     }
+
+    // 語音按鈕：立刻開啟 modal，同時在背景嘗試語音
+    voiceBtn.addEventListener('click', () => {
+        // 1. 立刻開啟 modal
+        openVoiceFallback();
+
+        // 2. 嘗試語音辨識（若支援）
+        if (!recognition || isListening) return;
+        try {
+            recognition.start();
+            isListening = true;
+            voiceTextInput.placeholder = '🎙 聆聽中，請說話...';
+        } catch (err) {
+            console.warn('recognition.start() 失敗:', err);
+        }
+    });
 
     function parseVoiceInput(text) {
         // 設定區域

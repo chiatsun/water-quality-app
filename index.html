@@ -133,18 +133,42 @@
                     <span class="material-symbols-outlined modal-icon">edit_note</span>
                     <h3>快速文字輸入</h3>
                 </div>
-                <p class="modal-desc">依序輸入數值（空格分隔）：</p>
-                <div class="modal-hint">
-                    <span class="hint-label">溫度</span>
-                    <span class="hint-label">pH</span>
-                    <span class="hint-label">鹽度</span>
-                    <span class="hint-label">ORP</span>
+
+                <!-- 上方兩欄說明 -->
+                <div class="modal-hints-row">
+                    <span>點標籤後輸入數值，可任意順序</span>
+                    <span>💡 點標籤後直接輸入數值</span>
                 </div>
+
+                <!-- 標籤按鈕 -->
+                <div class="quick-tags">
+                    <button type="button" class="quick-tag-btn" data-label="溫度">
+                        <span class="material-symbols-outlined">thermostat</span>溫度
+                    </button>
+                    <button type="button" class="quick-tag-btn" data-label="pH">
+                        <span class="material-symbols-outlined">science</span>pH
+                    </button>
+                    <button type="button" class="quick-tag-btn" data-label="鹽度">
+                        <span class="material-symbols-outlined">grain</span>鹽度
+                    </button>
+                    <button type="button" class="quick-tag-btn" data-label="ORP">
+                        <span class="material-symbols-outlined">electric_bolt</span>ORP
+                    </button>
+                </div>
+
+                <!-- 單一文字輸入框 -->
                 <input type="text" id="voiceTextInput" inputmode="decimal"
-                    placeholder="例：26.5 7.2 32.5 250">
-                <p class="modal-desc" style="margin-top:8px; font-size:12px; opacity:0.6">
-                    或輸入帶標籤文字：「溫度26.5 pH7.2 鹽度32.5 氧化250」
-                </p>
+                    placeholder="點上方按鈕後輸入數值">
+
+                <!-- 底部說明（兩行） -->
+                <div class="input-hint">
+                    <div class="hint-row">
+                        <span>不點標籤直接填數值時，順序為</span>
+                        <span class="hint-order">① 溫度 ② pH ③ 鹽度 ④ ORP</span>
+                    </div>
+                    <div>數值間可用 <strong>空白</strong> 或 <strong>，</strong>，區隔，支援負數</div>
+                </div>
+
                 <div class="modal-actions">
                     <button id="voiceModalCancel" type="button" class="modal-btn cancel-btn">取消</button>
                     <button id="voiceModalSubmit" type="button" class="modal-btn submit-modal-btn">

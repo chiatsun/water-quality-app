@@ -104,13 +104,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── 快速輸入 modal ──
     const voiceModal = document.getElementById('voiceModal');
-    const qIds = ['qTemp', 'qPh', 'qSal', 'qOrp'];
+    const voiceTextInput = document.getElementById('voiceTextInput');
 
-    // 標籤按鈕點擊 → 聚焦對應輸入欄
-    document.querySelectorAll('.quick-label-btn').forEach(btn => {
+    // 標籤按鈕點擊 → 若已有此標籤+數值先移除，再插入到末尾
+    document.querySelectorAll('.quick-tag-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const target = document.getElementById(btn.dataset.target);
-            if (target) { target.focus(); target.select(); }
+            const label = btn.dataset.label;
+            // 逸出正則特殊字元（pH 的 H 無需，但 ORP 等英文無問題）
+            const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 移除「標籤 + 緊接著的數字（含負號和小數點）」
+            const removeRx = new RegExp(escaped + '-?\\d*\\.?\\d*', 'g');
+            let cur = voiceTextInput.value.replace(removeRx, '');
+            // 清理多餘空格
+            cur = cur.replace(/\s{2,}/g, ' ').trim();
+
+            // 插入標籤到末尾
+            const sep = cur ? ' ' : '';
+            voiceTextInput.value = cur + sep + label;
+            voiceTextInput.focus();
+            const len = voiceTextInput.value.length;
+            voiceTextInput.setSelectionRange(len, len);
         });
     });
 
@@ -121,29 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 填入表單按鈕
     document.getElementById('voiceModalSubmit').addEventListener('click', () => {
-        const qTemp = document.getElementById('qTemp').value;
-        const qPh   = document.getElementById('qPh').value;
-        const qSal  = document.getElementById('qSal').value;
-        const qOrp  = document.getElementById('qOrp').value;
-
-        if (!qTemp && !qPh && !qSal && !qOrp) {
-            showToast('請至少輸入一個數值', true);
-            return;
-        }
-
-        if (qTemp) document.getElementById('tempField').value    = parseFloat(qTemp).toFixed(2);
-        if (qPh)   document.getElementById('phField').value      = parseFloat(qPh).toFixed(2);
-        if (qSal)  document.getElementById('salinityField').value = parseFloat(qSal).toFixed(2);
-        if (qOrp)  document.getElementById('orpField').value     = parseFloat(qOrp).toFixed(1);
-
+        const raw = voiceTextInput.value.trim();
+        if (!raw) { showToast('請先輸入數值', true); return; }
+        parseVoiceInput(raw);
         showToast('已填入表單');
         voiceModal.classList.remove('show');
-        // 清空所有快速輸入欄
-        qIds.forEach(id => { document.getElementById(id).value = ''; });
+        voiceTextInput.value = '';
     });
 
     // Enter 鍵直接送出
-    voiceModal.addEventListener('keydown', (e) => {
+    voiceTextInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('voiceModalSubmit').click();
     });
 
@@ -153,8 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function openVoiceFallback() {
+        voiceTextInput.value = '';
         voiceModal.classList.add('show');
-        setTimeout(() => document.getElementById('qTemp').focus(), 300);
+        // 開啟後不自動聚焦，讓使用者先點標籤按鈕
     }
 
     if (SpeechRecognition) {

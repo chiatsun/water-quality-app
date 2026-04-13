@@ -102,20 +102,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceBtn = document.getElementById('voiceBtn');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    // ── 文字輸入 fallback modal ──
+    // ── 快速輸入 modal ──
     const voiceModal = document.getElementById('voiceModal');
-    const voiceTextInput = document.getElementById('voiceTextInput');
+    const qIds = ['qTemp', 'qPh', 'qSal', 'qOrp'];
+
+    // 標籤按鈕點擊 → 聚焦對應輸入欄
+    document.querySelectorAll('.quick-label-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = document.getElementById(btn.dataset.target);
+            if (target) { target.focus(); target.select(); }
+        });
+    });
+
+    // 取消按鈕
     document.getElementById('voiceModalCancel').addEventListener('click', () => {
         voiceModal.classList.remove('show');
     });
+
+    // 填入表單按鈕
     document.getElementById('voiceModalSubmit').addEventListener('click', () => {
-        const raw = voiceTextInput.value.trim();
-        if (!raw) return;
-        parseVoiceInput(raw);
+        const qTemp = document.getElementById('qTemp').value;
+        const qPh   = document.getElementById('qPh').value;
+        const qSal  = document.getElementById('qSal').value;
+        const qOrp  = document.getElementById('qOrp').value;
+
+        if (!qTemp && !qPh && !qSal && !qOrp) {
+            showToast('請至少輸入一個數值', true);
+            return;
+        }
+
+        if (qTemp) document.getElementById('tempField').value    = parseFloat(qTemp).toFixed(2);
+        if (qPh)   document.getElementById('phField').value      = parseFloat(qPh).toFixed(2);
+        if (qSal)  document.getElementById('salinityField').value = parseFloat(qSal).toFixed(2);
+        if (qOrp)  document.getElementById('orpField').value     = parseFloat(qOrp).toFixed(1);
+
         showToast('已填入表單');
         voiceModal.classList.remove('show');
-        voiceTextInput.value = '';
+        // 清空所有快速輸入欄
+        qIds.forEach(id => { document.getElementById(id).value = ''; });
     });
+
+    // Enter 鍵直接送出
+    voiceModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('voiceModalSubmit').click();
+    });
+
     // 點遮罩關閉
     voiceModal.addEventListener('click', (e) => {
         if (e.target === voiceModal) voiceModal.classList.remove('show');
@@ -123,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openVoiceFallback() {
         voiceModal.classList.add('show');
-        setTimeout(() => voiceTextInput.focus(), 300);
+        setTimeout(() => document.getElementById('qTemp').focus(), 300);
     }
 
     if (SpeechRecognition) {
@@ -204,23 +235,31 @@ document.addEventListener('DOMContentLoaded', () => {
             return match ? match[1] : null;
         };
 
-        // 溫度
+        // ── 關鍵字模式（語音辨識文字 / 帶標籤輸入）──
         const temp = parseNum(/(?:溫度|溫)[^\d]*(\d+\.?\d*)/);
-        if (temp) document.getElementById('tempField').value = parseFloat(temp).toFixed(2);
+        const ph   = parseNum(/(?:ph|酸鹼|酸|批)[^\d]*(\d+\.?\d*)/i);
+        const sal  = parseNum(/(?:鹽度|鹽)[^\d]*(\d+\.?\d*)/);
+        const orp  = parseNum(/(?:氧化|還原|orp|o r p)[^\d]*(\d+\.?\d*)/i);
 
-        // pH
-        const ph = parseNum(/(?:ph|酸鹼|酸|批)[^\d]*(\d+\.?\d*)/i);
-        if (ph) document.getElementById('phField').value = parseFloat(ph).toFixed(2);
+        const hasKeyword = temp || ph || sal || orp;
 
-
-
-        // 鹽度
-        const sal = parseNum(/(?:鹽度|鹽)[^\d]*(\d+\.?\d*)/);
-        if (sal) document.getElementById('salinityField').value = parseFloat(sal).toFixed(2);
-
-        // 氧化還原
-        const orp = parseNum(/(?:氧化|還原|orp|o r p)[^\d]*(\d+\.?\d*)/i);
-        if (orp) document.getElementById('orpField').value = parseFloat(orp).toFixed(1);
+        if (hasKeyword) {
+            // 有關鍵字 → 填入對應欄位
+            if (temp) document.getElementById('tempField').value    = parseFloat(temp).toFixed(2);
+            if (ph)   document.getElementById('phField').value      = parseFloat(ph).toFixed(2);
+            if (sal)  document.getElementById('salinityField').value = parseFloat(sal).toFixed(2);
+            if (orp)  document.getElementById('orpField').value     = parseFloat(orp).toFixed(1);
+        } else {
+            // ── 純數字位置模式（空格 / 逗號分隔）──
+            // 依序對應：溫度、pH、鹽度、ORP
+            const nums = text.match(/-?\d+\.?\d*/g);
+            if (nums) {
+                if (nums[0] != null) document.getElementById('tempField').value     = parseFloat(nums[0]).toFixed(2);
+                if (nums[1] != null) document.getElementById('phField').value       = parseFloat(nums[1]).toFixed(2);
+                if (nums[2] != null) document.getElementById('salinityField').value = parseFloat(nums[2]).toFixed(2);
+                if (nums[3] != null) document.getElementById('orpField').value      = parseFloat(nums[3]).toFixed(1);
+            }
+        }
     }
 
     // ==========================================

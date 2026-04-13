@@ -436,52 +436,75 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .modal-desc {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-muted);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
-.modal-hint {
+/* Quick field rows */
+.quick-fields {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 4px;
 }
 
-.hint-label {
-    flex: 1;
-    text-align: center;
+.quick-field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quick-label-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 108px;
+    padding: 10px 12px;
     background: rgba(0, 240, 255, 0.08);
-    border: 1px solid rgba(0, 240, 255, 0.2);
-    border-radius: 8px;
-    padding: 6px 4px;
-    font-size: 12px;
-    font-weight: 600;
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 12px;
     color: var(--primary-color);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.modal-card > input {
-    width: 100%;
+.quick-label-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.quick-label-btn:active {
+    background: rgba(0, 240, 255, 0.2);
+    border-color: var(--primary-color);
+    transform: scale(0.96);
+}
+
+.quick-field-row input {
+    flex: 1;
     background: var(--input-bg);
-    border: 1px solid rgba(0, 240, 255, 0.3);
-    border-radius: 14px;
-    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 11px 14px;
     color: #fff;
-    font-size: 18px;
+    font-size: 17px;
     font-family: inherit;
-    letter-spacing: 2px;
     outline: none;
     transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.modal-card > input:focus {
+.quick-field-row input:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.15);
 }
 
-.modal-card > input::placeholder {
-    color: rgba(148, 163, 184, 0.4);
-    font-size: 15px;
-    letter-spacing: 1px;
+.quick-field-row input::placeholder {
+    color: rgba(148, 163, 184, 0.35);
+    font-size: 14px;
 }
 
 .modal-actions {

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // ⚠️ 請填入你的 Google Apps Script Web App URL
     // ==========================================
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6wK2VwGgi0gKS4d0biVR9d_QgepkmV3yIelbug_Wv60I8r7LQwAtch76Ku42rU3Lo/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwa9cJzlyX6jxNDzh2hYIrP716D68nkXgu5_W4cvDdwNq55P9mR7Z6tejp1LQV0INUp/exec';
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    
+
                     // 縮小至寬度最多 1200px
                     const MAX_WIDTH = 1200;
                     let width = img.width;
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     canvas.width = width;
                     canvas.height = height;
-                    
+
                     ctx.drawImage(img, 0, 0, width, height);
                     resolve(canvas.toDataURL('image/jpeg', 0.8)); // 輸出 Base64
                 };
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 呼叫 OCR.space 雲端 API (使用公共測試金鑰 helloworld)
             const formData = new FormData();
-            formData.append('apikey', 'helloworld'); 
+            formData.append('apikey', 'helloworld');
             formData.append('language', 'eng');
             formData.append('base64Image', base64Image);
             formData.append('scale', 'true');
@@ -231,16 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const result = await response.json();
-            
+
             if (result.IsErroredOnProcessing || !result.ParsedResults) {
                 throw new Error("API 錯誤: " + (result.ErrorMessage || "未知錯誤"));
             }
 
             const text = result.ParsedResults[0].ParsedText || "";
             console.log("雲端 OCR 原始辨識結果:\n", text);
-            
+
             let parsedCount = 0;
-            
+
             // 轉小寫嘗試辨識數值
             let t = text.toLowerCase();
             // 去除所有逗號 (以防被誤判)
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 showToast('辨識完成，未找到明確標籤', true);
             }
-            
+
             // 永遠彈出文字視窗方便使用者除錯與複製
             alert("雲端 API 辨識文字：\n\n" + text + "\n\n(已自動幫您填入有抓到的數值)");
 

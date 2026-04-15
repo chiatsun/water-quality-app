@@ -372,4 +372,45 @@ document.addEventListener('DOMContentLoaded', () => {
             ocrInput.value = '';
         }
     });
+
+    // ==========================================
+    // 動態切換分區表格連結
+    // ==========================================
+    const zoneLinkContainer = document.getElementById('zoneLinkContainer');
+    const zoneSheetLink = document.getElementById('zoneSheetLink');
+    const targetAreaName = document.getElementById('targetAreaName');
+    
+    const zoneSheetUrls = {
+        '生理區': 'https://docs.google.com/spreadsheets/d/1cCSFkOvnTlOHoz3XnfG8XnI3vu2V_SNnb_PHUjYJlNo/edit',
+        '魚病區': 'https://docs.google.com/spreadsheets/d/1Y9syI5JchRQU7X_DxEczs5tbqx2FI6QwQ5SFkh5BdEY/edit',
+        '基轉區': 'https://docs.google.com/spreadsheets/d/1VpdeeJFgSNLMr0Hpdi8vCuqRPVdmYwSn_H1GmTF_mA8/edit'
+    };
+
+    const areaRadios = document.querySelectorAll('input[name="area"]');
+    areaRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            updateZoneLink(radio.value);
+        });
+    });
+
+    function updateZoneLink(areaValue) {
+        if (zoneSheetUrls[areaValue]) {
+            targetAreaName.textContent = areaValue;
+            zoneSheetLink.href = zoneSheetUrls[areaValue];
+            zoneLinkContainer.classList.remove('hide');
+        } else {
+            zoneLinkContainer.classList.add('hide');
+        }
+    }
+
+    // 擴充原有的 parseVoiceInput，使其在語音填入後也更新連結
+    const originalParseVoiceInput = parseVoiceInput;
+    parseVoiceInput = (text) => {
+        originalParseVoiceInput(text);
+        // 檢查哪個 radio 被選中了
+        const checkedRadio = document.querySelector('input[name="area"]:checked');
+        if (checkedRadio) {
+            updateZoneLink(checkedRadio.value);
+        }
+    };
 });

@@ -23,9 +23,11 @@
                 <h1>水質紀錄</h1>
                 <p>每日測量資料同步</p>
             </div>
-            <div class="icon-container">
-                <span class="material-symbols-outlined">water_drop</span>
-            </div>
+            <a href="https://docs.google.com/spreadsheets/d/1S5BwHs2wRPfWwgPlUZ_lgKLCLtA9dndqune02ei80pc/edit" target="_blank" class="icon-link" title="開啟總表紀錄">
+                <div class="icon-container">
+                    <span class="material-symbols-outlined">water_drop</span>
+                </div>
+            </a>
         </header>
 
         <!-- Main Form -->
@@ -57,9 +59,18 @@
 
                 <!-- Area -->
                 <div class="input-group">
-                    <label>
-                        <span class="material-symbols-outlined icon">location_on</span> 測量區域
-                    </label>
+                    <div class="label-header">
+                        <label>
+                            <span class="material-symbols-outlined icon">location_on</span> 測量區域
+                        </label>
+                        <!-- 動態分區連結移至此處 -->
+                        <div id="zoneLinkContainer" class="zone-link-container hide">
+                            <a href="#" target="_blank" id="zoneSheetLink" class="zone-sheet-btn">
+                                <span class="material-symbols-outlined">table_chart</span>
+                                <span id="targetAreaName"></span> 歷史紀錄
+                            </a>
+                        </div>
+                    </div>
                     <div class="segment-group">
                         <label class="segment">
                             <input type="radio" name="area" value="生理區" required>

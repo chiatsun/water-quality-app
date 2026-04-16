@@ -167,8 +167,26 @@
                     </button>
                 </div>
 
-                <!-- 單一文字輸入框 -->
-                <input type="text" id="voiceTextInput" inputmode="decimal"
+                <!-- 新增：快速數字按鈕 (解決 Gboard 語音衝突) -->
+                <div class="quick-numbers">
+                    <button type="button" class="num-btn">1</button>
+                    <button type="button" class="num-btn">2</button>
+                    <button type="button" class="num-btn">3</button>
+                    <button type="button" class="num-btn">4</button>
+                    <button type="button" class="num-btn">5</button>
+                    <button type="button" class="num-btn">6</button>
+                    <button type="button" class="num-btn">7</button>
+                    <button type="button" class="num-btn">8</button>
+                    <button type="button" class="num-btn">9</button>
+                    <button type="button" class="num-btn">.</button>
+                    <button type="button" class="num-btn">0</button>
+                    <button type="button" class="num-btn backspace-btn">
+                        <span class="material-symbols-outlined">backspace</span>
+                    </button>
+                </div>
+
+                <!-- 單一文字輸入框 (改回 text 以啟用語音麥克風) -->
+                <input type="text" id="voiceTextInput"
                     placeholder="點上方按鈕後輸入數值">
 
                 <!-- 底部說明（兩行） -->

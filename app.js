@@ -127,6 +127,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // 快速數字按鈕點擊 (解決 Gboard 語音衝突)
+    document.querySelectorAll('.num-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault(); // 避免輸入框失去焦點
+            if (btn.classList.contains('backspace-btn')) {
+                voiceTextInput.value = voiceTextInput.value.slice(0, -1);
+            } else {
+                voiceTextInput.value += btn.textContent.trim();
+            }
+            voiceTextInput.focus(); // 讓游標保持在輸入框
+        });
+    });
+
     // 取消按鈕
     document.getElementById('voiceModalCancel').addEventListener('click', () => {
         stopRecognition();

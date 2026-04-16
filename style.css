@@ -639,3 +639,44 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .submit-modal-btn .material-symbols-outlined {
     font-size: 18px;
 }
+/* 快速數字按鈕列 (解決 Gboard 語音衝突) */
+.quick-numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.num-btn {
+    aspect-ratio: 1.5 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.num-btn:active {
+    background: rgba(0, 240, 255, 0.2);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: scale(0.92);
+}
+
+.backspace-btn {
+    color: var(--error-color);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.backspace-btn:active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--error-color);
+    color: var(--error-color);
+}

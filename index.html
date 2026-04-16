@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0b0f19">
     <!-- Icons (Material Symbols) -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css?v=1.7">
+    <link rel="stylesheet" href="style.css?v=1.9">
 </head>
 <body>
     <div class="app-container">
@@ -51,14 +51,32 @@
 
                     <!-- OCR 引擎彈出式選單 -->
                     <div id="ocrSettingsPopup" class="ocr-settings-popup">
-                        <span class="settings-label">辨識引擎設定</span>
-                        <div class="engine-toggle-group">
-                            <input type="radio" id="engine1" name="ocrEngine" value="1" checked>
-                            <label for="engine1">Engine 1 (快速)</label>
-                            
-                            <input type="radio" id="engine2" name="ocrEngine" value="2">
-                            <label for="engine2">Engine 2 (精準)</label>
+                        <div class="settings-section">
+                            <span class="settings-label">
+                                <span class="material-symbols-outlined">analytics</span>辨識引擎
+                            </span>
+                            <div class="engine-toggle-group">
+                                <input type="radio" id="engine1" name="ocrEngine" value="1">
+                                <label for="engine1">Engine 1 (快速)</label>
+                                <input type="radio" id="engine2" name="ocrEngine" value="2" checked>
+                                <label for="engine2">Engine 2 (精準)</label>
+                            </div>
                         </div>
+
+                        <div class="settings-section">
+                            <span class="settings-label">
+                                <span class="material-symbols-outlined">photo_size_select_large</span>影像畫質 (PX)
+                            </span>
+                            <div class="engine-toggle-group resolution-group">
+                                <input type="radio" id="res600" name="ocrRes" value="600" checked>
+                                <label for="res600">600</label>
+                                <input type="radio" id="res1200" name="ocrRes" value="1200">
+                                <label for="res1200">1200</label>
+                                <input type="radio" id="resOrig" name="ocrRes" value="9999">
+                                <label for="resOrig">原始</label>
+                            </div>
+                        </div>
+                        <div class="settings-tip">💡 超時時會自動轉 Engine 1 補救</div>
                     </div>
                 </div>
                 <!-- Hidden file input for OCR -->

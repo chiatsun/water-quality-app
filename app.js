@@ -305,21 +305,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 初始化：讀取儲存的引擎設定，預設為 Engine 1
-    const savedEngine = localStorage.getItem('selectedOcrEngine') || '1';
-    const targetRadio = document.querySelector(`input[name="ocrEngine"][value="${savedEngine}"]`);
-    if (targetRadio) targetRadio.checked = true;
-    localStorage.setItem('selectedOcrEngine', savedEngine);
+    // 初始化：讀取儲存的引擎與畫質設定
+    const savedEngine = localStorage.getItem('selectedOcrEngine') || '2';
+    const savedRes = localStorage.getItem('selectedOcrRes') || '600';
 
-    // 監聽引擎切換並儲存
+    const targetEngineRadio = document.querySelector(`input[name="ocrEngine"][value="${savedEngine}"]`);
+    if (targetEngineRadio) targetEngineRadio.checked = true;
+
+    const targetResRadio = document.querySelector(`input[name="ocrRes"][value="${savedRes}"]`);
+    if (targetResRadio) targetResRadio.checked = true;
+
+    // 監聽設定變動並儲存
     document.querySelectorAll('input[name="ocrEngine"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-            localStorage.setItem('selectedOcrEngine', radio.value);
-        });
+        radio.addEventListener('change', () => localStorage.setItem('selectedOcrEngine', radio.value));
+    });
+    document.querySelectorAll('input[name="ocrRes"]').forEach(radio => {
+        radio.addEventListener('change', () => localStorage.setItem('selectedOcrRes', radio.value));
     });
 
-    // 壓縮圖片：OCR.space 免費版有大小限制，且縮小能加快上傳速度
-    function compressImageForApi(file) {
+    /**
+     * 壓縮圖片並進行影像強化 (黑白高對比)
+     * @param {File} file 
+     * @param {number} maxWidth 
+     */
+    function compressImageForApi(file, maxWidth) {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -328,20 +337,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
-                    // 縮小至寬度最多 600px (加速辨識並減少 E101 超時)
-                    const MAX_WIDTH = 600;
                     let width = img.width;
                     let height = img.height;
-                    if (width > MAX_WIDTH) {
-                        height = Math.floor(height * (MAX_WIDTH / width));
-                        width = MAX_WIDTH;
+                    
+                    if (width > maxWidth) {
+                        height = Math.floor(height * (maxWidth / width));
+                        width = maxWidth;
                     }
+                    
                     canvas.width = width;
                     canvas.height = height;
 
+                    // ── 影像預處理：轉為高對比黑白圖，大幅提升液晶儀表辨識率 ──
+                    // 此濾鏡僅在支援的瀏覽器運行 (Modern Android/iOS Chrome 都支援)
+                    if (ctx.filter !== undefined) {
+                        ctx.filter = 'grayscale(100%) contrast(300%) brightness(120%)';
+                    }
+
                     ctx.drawImage(img, 0, 0, width, height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 降低品質至 0.6 以減少傳輸負擔
-                    console.log('壓縮後 Base64 長度:', dataUrl.length);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                    console.log(`[影像處理] 解析度: ${width}x${height}, 大小: ${Math.round(dataUrl.length/1024)}KB`);
                     resolve(dataUrl);
                 };
                 img.src = e.target.result;
@@ -350,98 +366,119 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /**
+     * 執行單次 OCR 請求並處理結果
+     */
+    async function performOcrRequest(file, engine, resPx) {
+        // 1. 影像預處理
+        const base64Image = await compressImageForApi(file, parseInt(resPx));
+
+        // 2. 呼叫 GAS 代理
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'ocr',
+                base64Image: base64Image,
+                ocrEngine: engine,
+                language: 'eng',
+                scale: 'true'
+            })
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const result = await response.json();
+        
+        if (result.status === 'error') {
+            throw new Error(result.message || "未知代理錯誤");
+        }
+
+        // 檢查平台層級錯誤 (例如 E101 超時)
+        if (result.IsErroredOnProcessing || !result.ParsedResults) {
+            const platformError = result.ErrorMessage || "OCR 平台目前忙碌中";
+            throw new Error(platformError);
+        }
+
+        return result.ParsedResults[0].ParsedText || "";
+    }
+
+    /**
+     * 數值解析邏輯
+     */
+    function applyOcrTextToFields(text) {
+        let parsedCount = 0;
+        let t = text.toLowerCase().replace(/,/g, '.');
+
+        // 溫度
+        const tempMatch = t.match(/(\d+\.\d+)\s*(?:°c|c|oc|0c|ec|ºc)/) || t.match(/(?:temp|c|°c)\s*:?\s*(\d+\.\d+)/);
+        if (tempMatch) { document.getElementById('tempField').value = parseFloat(tempMatch[1]).toFixed(2); parsedCount++; }
+
+        // pH
+        const phMatch = t.match(/(\d+\.\d+)\s*(?:ph)/) || t.match(/(?:ph)\s*:?\s*(\d+\.\d+)/);
+        if (phMatch) { document.getElementById('phField').value = parseFloat(phMatch[1]).toFixed(2); parsedCount++; }
+
+        // 鹽度
+        const salMatch = t.match(/(\d+\.\d+)\s*(?:psu|ppt|sal)/) || t.match(/(?:sal|psu|ppt)\s*:?\s*(\d+\.\d+)/);
+        if (salMatch) { document.getElementById('salinityField').value = parseFloat(salMatch[1]).toFixed(2); parsedCount++; }
+
+        // ORP
+        const orpMatch = t.match(/(\d+\.?\d*)\s*(?:orp|0rp|mv)/) || t.match(/(?:orp|mv)\s*:?\s*(\d+\.?\d*)/);
+        if (orpMatch) { document.getElementById('orpField').value = parseFloat(orpMatch[1]).toFixed(1); parsedCount++; }
+
+        return parsedCount;
+    }
+
+    // ── 主程式：處理相機辨識並實作智慧降級 ──
     ocrInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        showToast('影像雲端辨識中，請稍候...');
+        showToast('影像強化與辨識中...');
         ocrBtn.classList.add('active');
         ocrBtn.querySelector('span:last-child').textContent = '辨識中...';
 
+        // 讀取初始設定
+        let currentEngine = document.querySelector('input[name="ocrEngine"]:checked').value;
+        let currentRes = document.querySelector('input[name="ocrRes"]:checked').value;
+        let finalEngineUsed = currentEngine;
+        let finalResUsed = currentRes;
+
         try {
-            // 壓縮影像轉成 Base64
-            const base64Image = await compressImageForApi(file);
-
-            // 取得目前選擇的 OCREngine
-            const selectedEngine = document.querySelector('input[name="ocrEngine"]:checked').value;
-            console.log("使用辨識引擎:", selectedEngine);
-
-            // 方案：透過 Google Apps Script 代理傳送 (穩定性強化版)
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'ocr',
-                    base64Image: base64Image,
-                    ocrEngine: selectedEngine,
-                    language: 'eng',
-                    scale: 'true'
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`代理伺服器連線失敗 (HTTP ${response.status})`);
+            let text = "";
+            try {
+                // 第一波嘗試：優先執行使用者自訂設定
+                text = await performOcrRequest(file, currentEngine, currentRes);
+            } catch (firstErr) {
+                console.warn("第一次辨識嘗試失敗:", firstErr.message);
+                
+                // 檢查是否符合補救條件：選 Engine 2 卻超時 (E101) 或 平台出錯
+                if (currentEngine === '2' && (firstErr.message.includes('E101') || firstErr.message.includes('Timed out'))) {
+                    showToast('⌛ 伺服器忙碌，改用 Engine 1 補救中...');
+                    finalEngineUsed = '1';
+                    finalResUsed = '600'; // 補救時強制回歸 600px 以確保成功率
+                    text = await performOcrRequest(file, finalEngineUsed, finalResUsed);
+                } else {
+                    throw firstErr; // 其他錯誤 (如 GAS 授權) 則直接噴出
+                }
             }
 
-            const result = await response.json();
-            console.log("OCR Proxy Response (JSON):", result);
-            console.log("OCR 回傳結果:", result);
-
-            // 檢查是否為 GAS 噴出的邏輯錯誤 (通常代表腳本未正確部署)
-            if (result.status === 'error') {
-                throw new Error("GAS 傳回錯誤: " + (result.message || "可能是腳本未部署新版"));
-            }
-
-            if (result.IsErroredOnProcessing || !result.ParsedResults) {
-                throw new Error("OCR 平台錯誤: " + (result.ErrorMessage || "未知錯誤"));
-            }
-
-            const text = result.ParsedResults[0].ParsedText || "";
-            console.log("雲端 OCR 原始辨識結果:\n", text);
-
-            let parsedCount = 0;
-
-            // 轉小寫嘗試辨識數值
-            let t = text.toLowerCase();
-            // 去除所有逗號 (以防被誤判)
-            t = t.replace(/,/g, '.');
-
-            // 溫度: 支援 "24.14°c", "24.14c", "24.14oc", "24.14*c"
-            const tempMatch = t.match(/(\d+\.\d+)\s*(?:°c|c|oc|0c|ec|ºc)/) || t.match(/(?:temp|c|°c)\s*:?\s*(\d+\.\d+)/);
-            if (tempMatch) { document.getElementById('tempField').value = parseFloat(tempMatch[1]).toFixed(2); parsedCount++; }
-
-            // pH: 支援 "7.28ph", "7.28 ph", "ph7.28"
-            const phMatch = t.match(/(\d+\.\d+)\s*(?:ph)/) || t.match(/(?:ph)\s*:?\s*(\d+\.\d+)/);
-            if (phMatch) { document.getElementById('phField').value = parseFloat(phMatch[1]).toFixed(2); parsedCount++; }
-
-
-
-            // 鹽度 Salinity: 支援 "0.03psu", "0.03 psu"
-            const salMatch = t.match(/(\d+\.\d+)\s*(?:psu|ppt|sal)/) || t.match(/(?:sal|psu|ppt)\s*:?\s*(\d+\.\d+)/);
-            if (salMatch) { document.getElementById('salinityField').value = parseFloat(salMatch[1]).toFixed(2); parsedCount++; }
-
-            // ORP: 支援 "181.1orp", "181.10rp", "181.1 orp"
-            const orpMatch = t.match(/(\d+\.?\d*)\s*(?:orp|0rp|mv)/) || t.match(/(?:orp|mv)\s*:?\s*(\d+\.?\d*)/);
-            if (orpMatch) { document.getElementById('orpField').value = parseFloat(orpMatch[1]).toFixed(1); parsedCount++; }
-
-            if (parsedCount > 0) {
-                showToast(`成功辨識並填入 ${parsedCount} 個數值`);
+            // 解析並填入結果
+            const count = applyOcrTextToFields(text);
+            const resDisplay = finalResUsed === '9999' ? '原始' : `${finalResUsed}px`;
+            
+            if (count > 0) {
+                showToast(`✅ 辨識完成 (Eng${finalEngineUsed} | ${resDisplay})`);
             } else {
-                showToast('辨識完成，未找到明確標籤', true);
+                showToast(`辨識完成，未找到數值 (${finalEngineUsed})`, true);
             }
 
-            // 永遠彈出文字視窗方便使用者除錯與複製
-            alert("雲端 API 辨識文字：\n\n" + text + "\n\n(已自動幫您填入有抓到的數值)");
+            // 顯示原始文字供使用者對驗
+            alert(`雲端辨識結果 (${finalEngineUsed} | ${resDisplay})\n\n${text}\n\n(已自動填入抓到的數值)`);
 
         } catch (err) {
-            console.error('OCR Error Detail:', err);
-            
-            let errorMsg = err.message;
-            if (errorMsg === 'Failed to fetch') {
-                errorMsg = '網路連線失敗或被阻擋 (CORS)。請檢查網路，或聯絡開發者更新後端代理。';
-            }
-            
-            showToast('雲端辨識失敗', true);
-            alert("辨識錯誤詳情：\n" + errorMsg);
+            console.error('OCR Final Error:', err);
+            showToast('辨識失敗，請改用語音填寫', true);
+            alert("辨識錯誤詳情：\n" + err.message + "\n\n💡 建議：確保環境光線充足、無強烈反光。");
         } finally {
             ocrBtn.classList.remove('active');
             ocrBtn.querySelector('span:last-child').textContent = '拍照 (OCR)';

@@ -274,8 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
-                    // 縮小至寬度最多 1200px
-                    const MAX_WIDTH = 1200;
+                    // 縮小至寬度最多 800px (對於 LCD / 儀表數字辨識已足夠)
+                    const MAX_WIDTH = 800;
                     let width = img.width;
                     let height = img.height;
                     if (width > MAX_WIDTH) {
@@ -286,7 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     canvas.height = height;
 
                     ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8)); // 輸出 Base64
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 降低品質至 0.6 以減少傳輸負擔
+                    console.log('壓縮後 Base64 長度:', dataUrl.length);
+                    resolve(dataUrl);
                 };
                 img.src = e.target.result;
             };
@@ -306,18 +308,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // 壓縮影像轉成 Base64
             const base64Image = await compressImageForApi(file);
 
-            // 呼叫 OCR.space 雲端 API (使用公共測試金鑰 helloworld)
-            const formData = new FormData();
-            formData.append('apikey', 'helloworld');
-            formData.append('language', 'eng');
-            formData.append('base64Image', base64Image);
-            formData.append('scale', 'true');
-            formData.append('OCREngine', '2'); // Engine 2 對於數字和特規字體(LCD)的辨識能力遠勝 Engine 1
+            // 方案：透過 Google Apps Script 代理傳送，徹底解決瀏覽器 CORS 限制 (Failed to fetch)
+            const proxyData = new URLSearchParams();
+            proxyData.append('action', 'ocr');
+            proxyData.append('base64Image', base64Image);
 
-            const response = await fetch('https://api.ocr.space/parse/image', {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                body: formData
+                // 使用 no-cors 會導致無法讀取 response，故此處必須配合 GAS 支援 CORS
+                // 但 GAS 轉發請求是在伺服器端做的，對瀏覽器來說是 call 同一個網域的 GAS
+                body: proxyData
             });
+
+            if (!response.ok) {
+                throw new Error(`代理伺服器回應錯誤: ${response.status}`);
+            }
 
             const result = await response.json();
 
@@ -363,9 +368,15 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("雲端 API 辨識文字：\n\n" + text + "\n\n(已自動幫您填入有抓到的數值)");
 
         } catch (err) {
-            console.error(err);
-            showToast('雲端辨識失敗，請稍後重試', true);
-            alert("錯誤詳細資訊：\n" + err.message);
+            console.error('OCR Error Detail:', err);
+            
+            let errorMsg = err.message;
+            if (errorMsg === 'Failed to fetch') {
+                errorMsg = '網路連線失敗或被阻擋 (CORS)。請檢查網路，或聯絡開發者更新後端代理。';
+            }
+            
+            showToast('雲端辨識失敗', true);
+            alert("辨識錯誤詳情：\n" + errorMsg);
         } finally {
             ocrBtn.classList.remove('active');
             ocrBtn.querySelector('span:last-child').textContent = '拍照 (OCR)';

@@ -11,6 +11,31 @@ function doPost(e) {
       params = e.parameter;
     }
 
+    // ==========================================
+    // 新增：OCR 代理模式 (處理拍照辨識)
+    // ==========================================
+    if (params.action === 'ocr') {
+      var base64Image = params.base64Image;
+      if (!base64Image) {
+        return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "缺少圖片資料"}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      var ocrResponse = UrlFetchApp.fetch('https://api.ocr.space/parse/image', {
+        'method': 'post',
+        'payload': {
+          'apikey': 'helloworld', // 或填入您的金鑰
+          'language': 'eng',
+          'base64Image': base64Image,
+          'scale': 'true',
+          'OCREngine': '2'
+        }
+      });
+
+      return ContentService.createTextOutput(ocrResponse.getContentText())
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     var dateStr = params.date || '';
     var area = params.area || '';
     var temp = params.temperature || params.temp || '';

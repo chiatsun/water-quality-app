@@ -321,23 +321,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // 壓縮影像轉成 Base64
             const base64Image = await compressImageForApi(file);
 
-            // 方案：透過 Google Apps Script 代理傳送，徹底解決瀏覽器 CORS 限制 (Failed to fetch)
-            const proxyData = new URLSearchParams();
-            proxyData.append('action', 'ocr');
-            proxyData.append('base64Image', base64Image);
-
+            // 方案：透過 Google Apps Script 代理傳送 (穩定性強化版)
+            // 改用 JSON 傳輸以確保長字串 (Base64) 的完整性並避免某些瀏覽器對 URLSearchParams 的限制
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                // 使用 no-cors 會導致無法讀取 response，故此處必須配合 GAS 支援 CORS
-                // 但 GAS 轉發請求是在伺服器端做的，對瀏覽器來說是 call 同一個網域的 GAS
-                body: proxyData
+                body: JSON.stringify({
+                    action: 'ocr',
+                    base64Image: base64Image
+                })
             });
 
             if (!response.ok) {
-                throw new Error(`代理伺服器回應錯誤: ${response.status}`);
+                throw new Error(`代理伺服器連線失敗 (HTTP ${response.status})`);
             }
 
             const result = await response.json();
+            console.log("OCR Proxy Response (JSON):", result);
             console.log("OCR 回傳結果:", result);
 
             // 檢查是否為 GAS 噴出的邏輯錯誤 (通常代表腳本未正確部署)

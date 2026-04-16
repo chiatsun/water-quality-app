@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0b0f19">
     <!-- Icons (Material Symbols) -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css?v=1.5">
+    <link rel="stylesheet" href="style.css?v=1.6">
 </head>
 <body>
     <div class="app-container">
@@ -39,27 +39,30 @@
                     <span class="material-symbols-outlined">mic</span>
                     <span>語音填寫</span>
                 </button>
-                <button type="button" id="ocrBtn" class="action-btn ocr-btn">
-                    <span class="material-symbols-outlined">photo_camera</span>
-                    <span>拍照 (OCR)</span>
-                </button>
+                <div class="ocr-action-wrapper">
+                    <button type="button" id="ocrBtn" class="action-btn ocr-btn">
+                        <span class="material-symbols-outlined">photo_camera</span>
+                        <span>拍照 (OCR)</span>
+                    </button>
+                    <!-- OCR 引擎切換小圖示 -->
+                    <button type="button" id="ocrSettingsToggle" class="ocr-settings-toggle">
+                        <span class="material-symbols-outlined">settings_suggest</span>
+                    </button>
+
+                    <!-- OCR 引擎彈出式選單 -->
+                    <div id="ocrSettingsPopup" class="ocr-settings-popup">
+                        <span class="settings-label">辨識引擎設定</span>
+                        <div class="engine-toggle-group">
+                            <input type="radio" id="engine1" name="ocrEngine" value="1" checked>
+                            <label for="engine1">Engine 1 (快速)</label>
+                            
+                            <input type="radio" id="engine2" name="ocrEngine" value="2">
+                            <label for="engine2">Engine 2 (精準)</label>
+                        </div>
+                    </div>
+                </div>
                 <!-- Hidden file input for OCR -->
                 <input type="file" accept="image/*" capture="environment" id="ocrInput" style="display:none;">
-            </div>
-
-            <!-- OCR 引擎切換選項 (解決超時問題) -->
-            <div class="ocr-settings">
-                <span class="settings-label">
-                    <span class="material-symbols-outlined">settings_suggest</span>
-                    辨識引擎
-                </span>
-                <div class="engine-toggle-group">
-                    <input type="radio" id="engine1" name="ocrEngine" value="1" checked>
-                    <label for="engine1">Engine 1 (快速)</label>
-                    
-                    <input type="radio" id="engine2" name="ocrEngine" value="2">
-                    <label for="engine2">Engine 2 (精準)</label>
-                </div>
             </div>
 
             <form id="waterQualityForm">

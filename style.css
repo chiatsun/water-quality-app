@@ -750,38 +750,104 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     }
 }
 
-/* OCR 引擎切換設定 (調整風格) */
-.ocr-settings {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 12px 14px;
-    margin-bottom: 24px;
+/* OCR 動作與設定組合 */
+.ocr-action-wrapper {
+    position: relative;
+    flex: 1.2;
     display: flex;
+}
+
+.ocr-action-wrapper .ocr-btn {
+    width: 100%;
+    padding-right: 40px; /* 為圖示留空間 */
+}
+
+.ocr-settings-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ocr-settings-toggle:active {
+    background: rgba(0, 240, 255, 0.2);
+    transform: translateY(-50%) scale(0.9);
+}
+
+.ocr-settings-toggle .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* 彈出式選單 */
+.ocr-settings-popup {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 15px);
+    right: 0;
+    width: 220px;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    z-index: 100;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+}
+
+.ocr-settings-popup::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: 12px;
+    width: 16px;
+    height: 16px;
+    background: rgba(15, 23, 42, 0.98);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+    border-right: 1px solid rgba(0, 240, 255, 0.3);
+    transform: rotate(45deg);
+}
+
+.ocr-settings-popup.show {
+    display: flex;
+    animation: popupFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popupFade {
+    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .settings-label {
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.settings-label .material-symbols-outlined {
-    font-size: 16px;
-    color: var(--primary-color);
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 600;
+    text-align: center;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .engine-toggle-group {
     display: flex;
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 12px;
-    padding: 3px;
-    gap: 3px;
+    padding: 4px;
+    gap: 4px;
 }
 
 .engine-toggle-group input[type="radio"] {
@@ -791,29 +857,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .engine-toggle-group label {
     flex: 1;
     text-align: center;
-    padding: 8px 4px;
+    padding: 10px 4px;
     font-size: 13px;
     font-weight: 500;
     color: var(--text-muted);
     cursor: pointer;
-    border-radius: 10px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 9px;
+    transition: all 0.2s ease;
 }
 
 .engine-toggle-group input[type="radio"]:checked + label {
     background: linear-gradient(135deg, var(--primary-color), #00b8ff);
     color: #000;
-    box-shadow: 0 4px 12px rgba(0, 240, 255, 0.2);
-}
-
-/* 適應行動端高度 */
-@media (max-width: 480px) {
-    .ocr-settings {
-        padding: 8px 10px;
-        margin-bottom: 16px;
-    }
-    .engine-toggle-group label {
-        padding: 6px 4px;
-        font-size: 12px;
-    }
+    box-shadow: 0 4px 12px rgba(0, 240, 255, 0.3);
 }

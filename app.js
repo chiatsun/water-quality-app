@@ -277,6 +277,40 @@ document.addEventListener('DOMContentLoaded', () => {
         ocrInput.click();
     });
 
+    // ── OCR 彈出選單控制 (美化介面) ──
+    const ocrSettingsToggle = document.getElementById('ocrSettingsToggle');
+    const ocrSettingsPopup = document.getElementById('ocrSettingsPopup');
+
+    if (ocrSettingsToggle) {
+        ocrSettingsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ocrSettingsPopup.classList.toggle('show');
+        });
+    }
+
+    // 點擊外部關閉選單
+    document.addEventListener('click', (e) => {
+        if (ocrSettingsPopup && ocrSettingsPopup.classList.contains('show')) {
+            if (!ocrSettingsPopup.contains(e.target) && e.target.closest('#ocrSettingsToggle') === null) {
+                ocrSettingsPopup.classList.remove('show');
+            }
+        }
+    });
+
+    // 初始化：讀取儲存的引擎設定
+    const savedEngine = localStorage.getItem('selectedOcrEngine');
+    if (savedEngine) {
+        const targetRadio = document.querySelector(`input[name="ocrEngine"][value="${savedEngine}"]`);
+        if (targetRadio) targetRadio.checked = true;
+    }
+
+    // 監聽引擎切換並儲存
+    document.querySelectorAll('input[name="ocrEngine"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            localStorage.setItem('selectedOcrEngine', radio.value);
+        });
+    });
+
     // 壓縮圖片：OCR.space 免費版有大小限制，且縮小能加快上傳速度
     function compressImageForApi(file) {
         return new Promise((resolve) => {

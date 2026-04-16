@@ -471,7 +471,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     border-radius: 24px;
     padding: 24px;
     width: 100%;
-    max-width: 420px;
+    max-width: 440px; /* 稍微增加寬度以容納四個按鈕 */
     margin: 10px auto; /* 改用 margin 搭配靠頂對齊 */
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 240, 255, 0.1);
     animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -524,15 +524,31 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .quick-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px; /* 縮小間距 */
     margin-bottom: 14px;
+}
+
+.no-wrap-desktop {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    justify-content: space-between;
+}
+
+/* 移除捲軸視覺干擾但保持功能 */
+.no-wrap-desktop::-webkit-scrollbar {
+    display: none;
+}
+.no-wrap-desktop {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .quick-tag-btn {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 9px 14px;
+    padding: 8px 10px; /* 縮減內距以節省空間 */
     background: rgba(0, 240, 255, 0.08);
     border: 1px solid rgba(0, 240, 255, 0.25);
     border-radius: 50px;

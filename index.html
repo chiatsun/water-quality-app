@@ -57,9 +57,11 @@
                             </span>
                             <div class="engine-toggle-group">
                                 <input type="radio" id="engine1" name="ocrEngine" value="1">
-                                <label for="engine1">Engine 1 (快速)</label>
-                                <input type="radio" id="engine2" name="ocrEngine" value="2" checked>
-                                <label for="engine2">Engine 2 (精準)</label>
+                                <label for="engine1">E1 (快速)</label>
+                                <input type="radio" id="engine2" name="ocrEngine" value="2">
+                                <label for="engine2">E2 (精準)</label>
+                                <input type="radio" id="engine3" name="ocrEngine" value="3" checked>
+                                <label for="engine3">E3 (Google)</label>
                             </div>
                         </div>
 
@@ -68,12 +70,24 @@
                                 <span class="material-symbols-outlined">photo_size_select_large</span>影像畫質 (PX)
                             </span>
                             <div class="engine-toggle-group resolution-group">
-                                <input type="radio" id="res600" name="ocrRes" value="600" checked>
+                                <input type="radio" id="res600" name="ocrRes" value="600">
                                 <label for="res600">600</label>
-                                <input type="radio" id="res1200" name="ocrRes" value="1200">
+                                <input type="radio" id="res1200" name="ocrRes" value="1200" checked>
                                 <label for="res1200">1200</label>
                                 <input type="radio" id="resOrig" name="ocrRes" value="9999">
                                 <label for="resOrig">原始</label>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <span class="settings-label">
+                                <span class="material-symbols-outlined">filter_b_and_w</span>影像強化 (濾鏡)
+                            </span>
+                            <div class="engine-toggle-group">
+                                <input type="radio" id="filterOn" name="ocrFilter" value="on">
+                                <label for="filterOn">開啟</label>
+                                <input type="radio" id="filterOff" name="ocrFilter" value="off" checked>
+                                <label for="filterOff">關閉</label>
                             </div>
                         </div>
                         <div class="settings-tip">💡 超時時會自動轉 Engine 1 補救</div>
@@ -186,18 +200,18 @@
                 </div>
 
                 <!-- 標籤按鈕 -->
-                <div class="quick-tags">
+                <div class="quick-tags no-wrap-desktop">
                     <button type="button" class="quick-tag-btn" data-label="pH">
-                        <span class="material-symbols-outlined">science</span>① pH
+                        ① <span class="material-symbols-outlined">science</span>pH
                     </button>
                     <button type="button" class="quick-tag-btn" data-label="ORP">
-                        <span class="material-symbols-outlined">electric_bolt</span>② ORP
+                        ② <span class="material-symbols-outlined">electric_bolt</span>ORP
                     </button>
                     <button type="button" class="quick-tag-btn" data-label="鹽度">
-                        <span class="material-symbols-outlined">grain</span>③ 鹽度
+                        ③ <span class="material-symbols-outlined">grain</span>鹽度
                     </button>
                     <button type="button" class="quick-tag-btn" data-label="溫度">
-                        <span class="material-symbols-outlined">thermostat</span>④ 溫度
+                        ④ <span class="material-symbols-outlined">thermostat</span>溫度
                     </button>
                 </div>
 
@@ -242,6 +256,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.1"></script>
+    <script src="app.js?v=1.6"></script>
 </body>
 </html>

@@ -21,27 +21,43 @@ function doPost(e) {
           .setMimeType(ContentService.MimeType.JSON);
       }
 
-      try {
-        var ocrResponse = UrlFetchApp.fetch('https://api.ocr.space/parse/image', {
-          'method': 'post',
-          'payload': {
-            'apikey': 'helloworld',
-            'language': params.language || 'eng',
-            'base64Image': base64Image,
-            'scale': params.scale || 'true',
-            'OCREngine': params.ocrEngine || '1' 
-          },
-          'muteHttpExceptions': true // 讓 GAS 抓到 API 的原始報錯 JSON
-        });
+      var engine = params.ocrEngine || '1';
+      var resText = "";
 
-        var resText = ocrResponse.getContentText();
-        return ContentService.createTextOutput(resText).setMimeType(ContentService.MimeType.JSON);
+      try {
+        if (engine === '3') {
+          // --- 方案 A: 使用 Google Drive OCR (最強大的 Google 引擎) ---
+          resText = performGoogleOcr(base64Image);
+        } else {
+          // --- 方案 B: 使用 OCR.space API (原本的方法) ---
+          var ocrResponse = UrlFetchApp.fetch('https://api.ocr.space/parse/image', {
+            'method': 'post',
+            'payload': {
+              'apikey': 'helloworld',
+              'language': params.language || 'eng',
+              'base64Image': base64Image,
+              'scale': params.scale || 'true',
+              'OCREngine': engine 
+            },
+            'muteHttpExceptions': true 
+          });
+          var apiResult = JSON.parse(ocrResponse.getContentText());
+          if (apiResult.ParsedResults && apiResult.ParsedResults[0]) {
+            resText = apiResult.ParsedResults[0].ParsedText;
+          } else {
+            throw new Error(apiResult.ErrorMessage || "OCR.space 辨識失敗");
+          }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+          "status": "success",
+          "data": resText
+        })).setMimeType(ContentService.MimeType.JSON);
 
       } catch (ocrErr) {
-        // 捕捉連線超時或其他網路錯誤
         return ContentService.createTextOutput(JSON.stringify({
           "status": "error",
-          "message": "GAS 呼叫辨識 API 失敗: " + ocrErr.message
+          "message": "辨識失敗: " + ocrErr.message
         })).setMimeType(ContentService.MimeType.JSON);
       }
     }
@@ -140,6 +156,41 @@ function doPost(e) {
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * 使用 Google Drive OCR 進行辨識
+ * 需開啟進階服務：Drive API
+ */
+function performGoogleOcr(base64Data) {
+  try {
+    // 1. 去除 Base64 前綴並轉為 Blob
+    var byteString = Utilities.base64Decode(base64Data.split(',')[1]);
+    var blob = Utilities.newBlob(byteString, 'image/jpeg', 'ocr_temp_' + new Date().getTime() + '.jpg');
+
+    // 2. 使用 Drive API (Advanced Service) 建立檔案並啟用 OCR
+    // 將 mimeType 設為 GOOGLE_DOCS 會自動轉換為文字
+    var resource = {
+      title: blob.getName(),
+      mimeType: MimeType.GOOGLE_DOCS
+    };
+    
+    // 執行檔案建立 (啟動 OCR)
+    // 注意：Drive API v3 使用 create，v2 使用 insert
+    var driveFile = Drive.Files.create(resource, blob);
+    
+    // 3. 讀取產生的文件內容
+    var doc = DocumentApp.openById(driveFile.id);
+    var text = doc.getBody().getText();
+    
+    // 4. 清理：刪除產生的暫存文件
+    // 注意：在 GAS 的 Drive API v3 中，delete 方法被改名為 remove (避免與 JS 關鍵字衝突)
+    Drive.Files.remove(driveFile.id);
+    
+    return text;
+  } catch (e) {
+    throw new Error("Google OCR 流程發生錯誤: " + e.message);
   }
 }
 

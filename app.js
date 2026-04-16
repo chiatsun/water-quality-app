@@ -305,9 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 初始化：讀取儲存的引擎與畫質設定
-    const savedEngine = localStorage.getItem('selectedOcrEngine') || '2';
-    const savedRes = localStorage.getItem('selectedOcrRes') || '600';
+    // 初始化：讀取儲存的引擎、畫質與濾鏡設定
+    const savedEngine = localStorage.getItem('selectedOcrEngine') || '3';
+    const savedRes = localStorage.getItem('selectedOcrRes') || '1200';
+    const savedFilter = localStorage.getItem('selectedOcrFilter') || 'off';
 
     const targetEngineRadio = document.querySelector(`input[name="ocrEngine"][value="${savedEngine}"]`);
     if (targetEngineRadio) targetEngineRadio.checked = true;
@@ -315,12 +316,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetResRadio = document.querySelector(`input[name="ocrRes"][value="${savedRes}"]`);
     if (targetResRadio) targetResRadio.checked = true;
 
+    const targetFilterRadio = document.querySelector(`input[name="ocrFilter"][value="${savedFilter}"]`);
+    if (targetFilterRadio) targetFilterRadio.checked = true;
+
     // 監聽設定變動並儲存
     document.querySelectorAll('input[name="ocrEngine"]').forEach(radio => {
         radio.addEventListener('change', () => localStorage.setItem('selectedOcrEngine', radio.value));
     });
     document.querySelectorAll('input[name="ocrRes"]').forEach(radio => {
         radio.addEventListener('change', () => localStorage.setItem('selectedOcrRes', radio.value));
+    });
+    document.querySelectorAll('input[name="ocrFilter"]').forEach(radio => {
+        radio.addEventListener('change', () => localStorage.setItem('selectedOcrFilter', radio.value));
     });
 
     /**
@@ -348,9 +355,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     canvas.width = width;
                     canvas.height = height;
 
-                    // ── 影像預處理：轉為高對比黑白圖，大幅提升液晶儀表辨識率 ──
-                    // 此濾鏡僅在支援的瀏覽器運行 (Modern Android/iOS Chrome 都支援)
-                    if (ctx.filter !== undefined) {
+                    // ── 影像預處理：視設定決定是否開啟高對比濾鏡 ──
+                    const isFilterOn = localStorage.getItem('selectedOcrFilter') === 'on';
+                    if (isFilterOn && ctx.filter !== undefined) {
                         ctx.filter = 'grayscale(100%) contrast(300%) brightness(120%)';
                     }
 
@@ -390,16 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
         
         if (result.status === 'error') {
-            throw new Error(result.message || "未知代理錯誤");
+            throw new Error(result.message || "未知辨識錯誤");
         }
 
-        // 檢查平台層級錯誤 (例如 E101 超時)
-        if (result.IsErroredOnProcessing || !result.ParsedResults) {
-            const platformError = result.ErrorMessage || "OCR 平台目前忙碌中";
-            throw new Error(platformError);
-        }
-
-        return result.ParsedResults[0].ParsedText || "";
+        return result.data || "";
     }
 
     /**
@@ -407,23 +408,51 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function applyOcrTextToFields(text) {
         let parsedCount = 0;
+        // 移除所有逗號換成小數點，轉小寫
         let t = text.toLowerCase().replace(/,/g, '.');
 
-        // 溫度
-        const tempMatch = t.match(/(\d+\.\d+)\s*(?:°c|c|oc|0c|ec|ºc)/) || t.match(/(?:temp|c|°c)\s*:?\s*(\d+\.\d+)/);
-        if (tempMatch) { document.getElementById('tempField').value = parseFloat(tempMatch[1]).toFixed(2); parsedCount++; }
+        // 1. 溫度 (修正：排除 psi 數值，並精確比對空格後的 0)
+        // 優先找 [數字]°C/C/temp，若無則找最後一個 [數字] 0
+        let tempMatch = t.match(/(\d+\.\d+)\s*(?:°c|c|ºc|temp)/i) || t.match(/(?:temp|c|°c)\s*:?\s*(\d+\.\d+)/i);
+        
+        if (!tempMatch) {
+            // 如果沒看到單位，找「數字 + 空格 + 0」(HANNA 常見誤認)
+            const backupMatches = [...t.matchAll(/(\d+\.\d+)\s+0\b/g)];
+            if (backupMatches.length > 0) {
+                // 通常溫度在最下面，選最後一個符合的
+                tempMatch = backupMatches[backupMatches.length - 1];
+            }
+        }
 
-        // pH
-        const phMatch = t.match(/(\d+\.\d+)\s*(?:ph)/) || t.match(/(?:ph)\s*:?\s*(\d+\.\d+)/);
-        if (phMatch) { document.getElementById('phField').value = parseFloat(phMatch[1]).toFixed(2); parsedCount++; }
+        if (tempMatch) { 
+            document.getElementById('tempField').value = parseFloat(tempMatch[1]).toFixed(2); 
+            parsedCount++; 
+        }
 
-        // 鹽度
-        const salMatch = t.match(/(\d+\.\d+)\s*(?:psu|ppt|sal)/) || t.match(/(?:sal|psu|ppt)\s*:?\s*(\d+\.\d+)/);
-        if (salMatch) { document.getElementById('salinityField').value = parseFloat(salMatch[1]).toFixed(2); parsedCount++; }
+        // 2. pH (辨識通常準確)
+        const phMatch = t.match(/(\d+\.\d+)\s*(?:ph)/i);
+        if (phMatch) { 
+            document.getElementById('phField').value = parseFloat(phMatch[1]).toFixed(2); 
+            parsedCount++; 
+        }
 
-        // ORP
-        const orpMatch = t.match(/(\d+\.?\d*)\s*(?:orp|0rp|mv)/) || t.match(/(?:orp|mv)\s*:?\s*(\d+\.?\d*)/);
-        if (orpMatch) { document.getElementById('orpField').value = parseFloat(orpMatch[1]).toFixed(1); parsedCount++; }
+        // 3. 專屬排除：psi (壓力值，避免誤入鹽度或溫度)
+        const psiMatch = t.match(/(\d+\.\d+)\s*psi/i);
+        const psiVal = psiMatch ? psiMatch[1] : null;
+
+        // 4. 鹽度 (辨識通常準確)
+        const salMatch = t.match(/(\d+\.\d+)\s*(?:psu|ppt|sal)/i);
+        if (salMatch && salMatch[1] !== psiVal) { 
+            document.getElementById('salinityField').value = parseFloat(salMatch[1]).toFixed(2); 
+            parsedCount++; 
+        }
+
+        // 5. ORP (修正：HANNA 常將 ORP 誤認為 0RP 或 RP)
+        const orpMatch = t.match(/(\d+\.?\d*)\s*(?:orp|0rp|rp|mv)/i);
+        if (orpMatch) { 
+            document.getElementById('orpField').value = parseFloat(orpMatch[1]).toFixed(1); 
+            parsedCount++; 
+        }
 
         return parsedCount;
     }

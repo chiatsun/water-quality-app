@@ -338,9 +338,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = await response.json();
+            console.log("OCR 回傳結果:", result);
+
+            // 檢查是否為 GAS 噴出的邏輯錯誤 (通常代表腳本未正確部署)
+            if (result.status === 'error') {
+                throw new Error("GAS 傳回錯誤: " + (result.message || "可能是腳本未部署新版"));
+            }
 
             if (result.IsErroredOnProcessing || !result.ParsedResults) {
-                throw new Error("API 錯誤: " + (result.ErrorMessage || "未知錯誤"));
+                throw new Error("OCR 平台錯誤: " + (result.ErrorMessage || "未知錯誤"));
             }
 
             const text = result.ParsedResults[0].ParsedText || "";

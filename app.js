@@ -289,6 +289,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 點擊外部關閉選單
+    document.addEventListener('touchstart', (e) => {
+        if (ocrSettingsPopup && ocrSettingsPopup.classList.contains('show')) {
+            if (!ocrSettingsPopup.contains(e.target) && e.target.closest('#ocrSettingsToggle') === null) {
+                ocrSettingsPopup.classList.remove('show');
+            }
+        }
+    }, {passive: true});
+
     document.addEventListener('click', (e) => {
         if (ocrSettingsPopup && ocrSettingsPopup.classList.contains('show')) {
             if (!ocrSettingsPopup.contains(e.target) && e.target.closest('#ocrSettingsToggle') === null) {
@@ -297,12 +305,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 初始化：讀取儲存的引擎設定
-    const savedEngine = localStorage.getItem('selectedOcrEngine');
-    if (savedEngine) {
-        const targetRadio = document.querySelector(`input[name="ocrEngine"][value="${savedEngine}"]`);
-        if (targetRadio) targetRadio.checked = true;
-    }
+    // 初始化：讀取儲存的引擎設定，預設為 Engine 1
+    const savedEngine = localStorage.getItem('selectedOcrEngine') || '1';
+    const targetRadio = document.querySelector(`input[name="ocrEngine"][value="${savedEngine}"]`);
+    if (targetRadio) targetRadio.checked = true;
+    localStorage.setItem('selectedOcrEngine', savedEngine);
 
     // 監聽引擎切換並儲存
     document.querySelectorAll('input[name="ocrEngine"]').forEach(radio => {

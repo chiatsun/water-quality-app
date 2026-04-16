@@ -805,7 +805,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     border-radius: 18px;
     padding: 16px;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-    z-index: 100;
+    z-index: 1000; /* 大幅提升層級，確保不被輸入框擋住 */
     flex-direction: column;
     gap: 12px;
 }

@@ -4,7 +4,7 @@ function doPost(e) {
     if (e.postData && e.postData.contents) {
       try {
         params = JSON.parse(e.postData.contents);
-      } catch(err) {
+      } catch (err) {
         params = e.parameter;
       }
     } else {
@@ -12,28 +12,38 @@ function doPost(e) {
     }
 
     // ==========================================
-    // 新增：OCR 代理模式 (處理拍照辨識)
+    // 新增：OCR 代理模式 (處理拍照辨識 - 穩定性強化版)
     // ==========================================
     if (params.action === 'ocr') {
       var base64Image = params.base64Image;
       if (!base64Image) {
-        return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "缺少圖片資料"}))
+        return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": "缺少圖片資料" }))
           .setMimeType(ContentService.MimeType.JSON);
       }
 
-      var ocrResponse = UrlFetchApp.fetch('https://api.ocr.space/parse/image', {
-        'method': 'post',
-        'payload': {
-          'apikey': 'helloworld', // 或填入您的金鑰
-          'language': 'eng',
-          'base64Image': base64Image,
-          'scale': 'true',
-          'OCREngine': '2'
-        }
-      });
+      try {
+        var ocrResponse = UrlFetchApp.fetch('https://api.ocr.space/parse/image', {
+          'method': 'post',
+          'payload': {
+            'apikey': 'helloworld',
+            'language': params.language || 'eng',
+            'base64Image': base64Image,
+            'scale': params.scale || 'true',
+            'OCREngine': params.ocrEngine || '1' 
+          },
+          'muteHttpExceptions': true // 讓 GAS 抓到 API 的原始報錯 JSON
+        });
 
-      return ContentService.createTextOutput(ocrResponse.getContentText())
-        .setMimeType(ContentService.MimeType.JSON);
+        var resText = ocrResponse.getContentText();
+        return ContentService.createTextOutput(resText).setMimeType(ContentService.MimeType.JSON);
+
+      } catch (ocrErr) {
+        // 捕捉連線超時或其他網路錯誤
+        return ContentService.createTextOutput(JSON.stringify({
+          "status": "error",
+          "message": "GAS 呼叫辨識 API 失敗: " + ocrErr.message
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
     }
 
     var dateStr = params.date || '';
@@ -44,7 +54,7 @@ function doPost(e) {
     var orp = params.orp || '';
 
     if (!dateStr || !area) {
-      return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "缺少日期或區域"}))
+      return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": "缺少日期或區域" }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -58,7 +68,7 @@ function doPost(e) {
       var masterSheetId = '1S5BwHs2wRPfWwgPlUZ_lgKLCLtA9dndqune02ei80pc';
       var masterSs = SpreadsheetApp.openById(masterSheetId);
       var masterSheet = masterSs.getActiveSheet();
-      
+
       // 假設總表順序：日期, 區域, 溫度, pH, 鹽度, 氧化還原
       masterSheet.appendRow([dateStr, area, temp, ph, salinity, orp]);
       messages.push("總表已紀錄");
@@ -79,7 +89,7 @@ function doPost(e) {
 
       var targetSheetId = sheetsMap[area];
       if (!targetSheetId) {
-         throw new Error("未知的測量區域: " + area);
+        throw new Error("未知的測量區域: " + area);
       }
 
       var ss = SpreadsheetApp.openById(targetSheetId);
@@ -89,7 +99,7 @@ function doPost(e) {
       var yearROC = dateObj.getFullYear() - 1911;
       var month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
       var day = dateObj.getDate();
-      
+
       var sheetName = yearROC + '/' + month;
       var sheet = ss.getSheetByName(sheetName);
 
@@ -99,9 +109,9 @@ function doPost(e) {
 
       var targetRow = day + 2;
       var updatesCount = 0;
-      
+
       function updateCellIfEmpty(colIndex, value) {
-        if (value === '' || value === undefined || value === null) return; 
+        if (value === '' || value === undefined || value === null) return;
         var cell = sheet.getRange(targetRow, colIndex);
         var currentVal = cell.getValue();
         if (currentVal === '' || currentVal === null) {
@@ -123,12 +133,12 @@ function doPost(e) {
 
     // 將執行結果回傳
     return ContentService.createTextOutput(JSON.stringify({
-      "status": isError ? "warning" : "success", 
+      "status": isError ? "warning" : "success",
       "message": messages.join(" | ")
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": error.toString()}))
+    return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -136,3 +146,10 @@ function doPost(e) {
 function doOptions(e) {
   return ContentService.createTextOutput("").setMimeType(ContentService.MimeType.TEXT);
 }
+
+function authTrigger() {
+  // 這只是用來強迫 Google 跳出授權視窗
+  UrlFetchApp.fetch("https://www.google.com");
+  Logger.log("授權成功！");
+}
+

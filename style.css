@@ -749,3 +749,71 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
         display: none !important;
     }
 }
+
+/* OCR 引擎切換設定 (調整風格) */
+.ocr-settings {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.settings-label .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--primary-color);
+}
+
+.engine-toggle-group {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 3px;
+    gap: 3px;
+}
+
+.engine-toggle-group input[type="radio"] {
+    display: none;
+}
+
+.engine-toggle-group label {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.engine-toggle-group input[type="radio"]:checked + label {
+    background: linear-gradient(135deg, var(--primary-color), #00b8ff);
+    color: #000;
+    box-shadow: 0 4px 12px rgba(0, 240, 255, 0.2);
+}
+
+/* 適應行動端高度 */
+@media (max-width: 480px) {
+    .ocr-settings {
+        padding: 8px 10px;
+        margin-bottom: 16px;
+    }
+    .engine-toggle-group label {
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+}

@@ -287,8 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
-                    // 縮小至寬度最多 800px (對於 LCD / 儀表數字辨識已足夠)
-                    const MAX_WIDTH = 800;
+                    // 縮小至寬度最多 600px (加速辨識並減少 E101 超時)
+                    const MAX_WIDTH = 600;
                     let width = img.width;
                     let height = img.height;
                     if (width > MAX_WIDTH) {
@@ -321,13 +321,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // 壓縮影像轉成 Base64
             const base64Image = await compressImageForApi(file);
 
+            // 取得目前選擇的 OCREngine
+            const selectedEngine = document.querySelector('input[name="ocrEngine"]:checked').value;
+            console.log("使用辨識引擎:", selectedEngine);
+
             // 方案：透過 Google Apps Script 代理傳送 (穩定性強化版)
-            // 改用 JSON 傳輸以確保長字串 (Base64) 的完整性並避免某些瀏覽器對 URLSearchParams 的限制
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify({
                     action: 'ocr',
-                    base64Image: base64Image
+                    base64Image: base64Image,
+                    ocrEngine: selectedEngine,
+                    language: 'eng',
+                    scale: 'true'
                 })
             });
 

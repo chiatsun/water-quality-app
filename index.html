@@ -123,14 +123,6 @@
                     </div>
                 </div>
 
-                <!-- Temperature -->
-                <div class="input-group">
-                    <label for="tempField">
-                        <span class="material-symbols-outlined icon">thermostat</span> 溫度 (℃)
-                    </label>
-                    <input type="number" id="tempField" name="temperature" step="0.01" inputmode="decimal" placeholder="例如: 25.40" required>
-                </div>
-
                 <!-- pH -->
                 <div class="input-group">
                     <label for="phField">
@@ -139,7 +131,13 @@
                     <input type="number" id="phField" name="ph" step="0.01" inputmode="decimal" placeholder="例如: 7.20" required>
                 </div>
 
-
+                <!-- ORP (mV) -->
+                <div class="input-group">
+                    <label for="orpField">
+                        <span class="material-symbols-outlined icon">electric_bolt</span> 氧化還原 (ORP) mV
+                    </label>
+                    <input type="number" id="orpField" name="orp" step="0.1" inputmode="decimal" placeholder="例如: 250.0" required>
+                </div>
 
                 <!-- Salinity (PSU) -->
                 <div class="input-group">
@@ -149,12 +147,12 @@
                     <input type="number" id="salinityField" name="salinity" step="0.01" inputmode="decimal" placeholder="例如: 32.50" required>
                 </div>
 
-                <!-- ORP (mV) -->
+                <!-- Temperature -->
                 <div class="input-group">
-                    <label for="orpField">
-                        <span class="material-symbols-outlined icon">electric_bolt</span> 氧化還原 (ORP) mV
+                    <label for="tempField">
+                        <span class="material-symbols-outlined icon">thermostat</span> 溫度 (℃)
                     </label>
-                    <input type="number" id="orpField" name="orp" step="0.1" inputmode="decimal" placeholder="例如: 250.0" required>
+                    <input type="number" id="tempField" name="temperature" step="0.01" inputmode="decimal" placeholder="例如: 25.40" required>
                 </div>
 
                 <!-- Submit Button -->
@@ -189,17 +187,17 @@
 
                 <!-- 標籤按鈕 -->
                 <div class="quick-tags">
-                    <button type="button" class="quick-tag-btn" data-label="溫度">
-                        <span class="material-symbols-outlined">thermostat</span>溫度
-                    </button>
                     <button type="button" class="quick-tag-btn" data-label="pH">
                         <span class="material-symbols-outlined">science</span>pH
+                    </button>
+                    <button type="button" class="quick-tag-btn" data-label="ORP">
+                        <span class="material-symbols-outlined">electric_bolt</span>ORP
                     </button>
                     <button type="button" class="quick-tag-btn" data-label="鹽度">
                         <span class="material-symbols-outlined">grain</span>鹽度
                     </button>
-                    <button type="button" class="quick-tag-btn" data-label="ORP">
-                        <span class="material-symbols-outlined">electric_bolt</span>ORP
+                    <button type="button" class="quick-tag-btn" data-label="溫度">
+                        <span class="material-symbols-outlined">thermostat</span>溫度
                     </button>
                 </div>
 
@@ -229,7 +227,7 @@
                 <div class="input-hint">
                     <div class="hint-row">
                         <span>不點標籤直接填數值時，順序為</span>
-                        <span class="hint-order">① 溫度 ② pH ③ 鹽度 ④ ORP</span>
+                        <span class="hint-order">① pH ② ORP ③ 鹽度 ④ 溫度</span>
                     </div>
                     <div>數值間可用 <strong>空白</strong> 或 <strong>，</strong>，區隔，支援負數</div>
                 </div>

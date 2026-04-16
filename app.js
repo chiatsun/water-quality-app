@@ -256,13 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (orp)  document.getElementById('orpField').value     = parseFloat(orp).toFixed(1);
         } else {
             // ── 純數字位置模式（空格 / 逗號分隔）──
-            // 依序對應：溫度、pH、鹽度、ORP
+            // 依序對應：pH、ORP、鹽度、溫度
             const nums = text.match(/-?\d+\.?\d*/g);
             if (nums) {
-                if (nums[0] != null) document.getElementById('tempField').value     = parseFloat(nums[0]).toFixed(2);
-                if (nums[1] != null) document.getElementById('phField').value       = parseFloat(nums[1]).toFixed(2);
+                if (nums[0] != null) document.getElementById('phField').value       = parseFloat(nums[0]).toFixed(2);
+                if (nums[1] != null) document.getElementById('orpField').value      = parseFloat(nums[1]).toFixed(1);
                 if (nums[2] != null) document.getElementById('salinityField').value = parseFloat(nums[2]).toFixed(2);
-                if (nums[3] != null) document.getElementById('orpField').value      = parseFloat(nums[3]).toFixed(1);
+                if (nums[3] != null) document.getElementById('tempField').value     = parseFloat(nums[3]).toFixed(2);
             }
         }
     }

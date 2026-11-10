@@ -241,10 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // ── 關鍵字模式（語音辨識文字 / 帶標籤輸入）──
-        const temp = parseNum(/(?:溫度|溫)[^\d]*(\d+\.?\d*)/);
+        const temp = parseNum(/(?:溫度|溫|°c|℃)[^\d]*(-?\d+\.?\d*)/i);
         const ph   = parseNum(/(?:ph|酸鹼|酸|批)[^\d]*(\d+\.?\d*)/i);
-        const sal  = parseNum(/(?:鹽度|鹽)[^\d]*(\d+\.?\d*)/);
-        const orp  = parseNum(/(?:氧化|還原|orp|o r p)[^\d]*(\d+\.?\d*)/i);
+        const sal  = parseNum(/(?:鹽度|鹽|psu)[^\d]*(\d+\.?\d*)/i);
+        const orp  = parseNum(/(?:氧化|還原|orp|opr|o r p|o p r)[^\d]*(-?\d+\.?\d*)/i);
 
         const hasKeyword = temp || ph || sal || orp;
 
@@ -404,16 +404,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * 數值解析邏輯
+     * 數值解析邏輯 (精確擷取 pH, ORP/OPR, PSU, °C)
      */
     function applyOcrTextToFields(text) {
         let parsedCount = 0;
         // 移除所有逗號換成小數點，轉小寫
         let t = text.toLowerCase().replace(/,/g, '.');
 
-        // 1. 溫度 (修正：排除 psi 數值，並精確比對空格後的 0)
-        // 優先找 [數字]°C/C/temp，若無則找最後一個 [數字] 0
-        let tempMatch = t.match(/(\d+\.\d+)\s*(?:°c|c|ºc|temp)/i) || t.match(/(?:temp|c|°c)\s*:?\s*(\d+\.\d+)/i);
+        // 1. pH 值 (精確抓取 pH 前面數值，排除 -59.8mVpH 等電位毫伏特數值，合理範圍 0~14)
+        const cleanPhText = t.replace(/-?\d+\.?\d*\s*m\s*v\s*p?\s*h?/gi, '');
+        const phMatch = cleanPhText.match(/(\d{1,2}(?:\.\d+)?)\s*ph\b/i);
+        if (phMatch) { 
+            const phVal = parseFloat(phMatch[1]);
+            if (phVal >= 0 && phVal <= 14) {
+                document.getElementById('phField').value = phVal.toFixed(2); 
+                parsedCount++; 
+            }
+        }
+
+        // 2. ORP / OPR 氧化還原 (支援 179.20RP、179.2 0RP、179.2 ORP、179.2 OPR，並排除 mVpH 誤抓)
+        // 情況 A: 179.20RP (OCR 將 ORP 誤辨識為 0RP，且緊黏於一位小數後)
+        const orpMatchA = t.match(/(-?\d+\.\d)0\s*[r|p][p|r]\b/i);
+        if (orpMatchA) { 
+            document.getElementById('orpField').value = parseFloat(orpMatchA[1]).toFixed(1); 
+            parsedCount++; 
+        } else {
+            // 情況 B: 一般 ORP / OPR / 0RP (有空格或正常格式，注意不含 mv 避免抓到 -59.8mVpH)
+            const orpMatchB = t.match(/(-?\d+(?:\.\d+)?)\s*(?:orp|opr|0rp|0pr)\b/i) || 
+                              t.match(/(-?\d+(?:\.\d+)?)\s*rp\b/i);
+            if (orpMatchB) { 
+                document.getElementById('orpField').value = parseFloat(orpMatchB[1]).toFixed(1); 
+                parsedCount++; 
+            }
+        }
+
+        // 3. 鹽度 (優先精確抓取 PSU 前面的數值，如 32.99PSU，避免誤抓前行的 ppt)
+        const psuMatch = t.match(/(\d+\.\d+)\s*psu\b/i);
+        if (psuMatch) { 
+            document.getElementById('salinityField').value = parseFloat(psuMatch[1]).toFixed(2); 
+            parsedCount++; 
+        } else {
+            // 備用：若畫面完全無 PSU 標籤，才抓取 ppt 或 sal (並排除 psi 壓力值)
+            const psiMatch = t.match(/(\d+\.\d+)\s*psi/i);
+            const psiVal = psiMatch ? psiMatch[1] : null;
+            const backupSalMatch = t.match(/(\d+\.\d+)\s*(?:ppt|sal)/i);
+            if (backupSalMatch && backupSalMatch[1] !== psiVal) { 
+                document.getElementById('salinityField').value = parseFloat(backupSalMatch[1]).toFixed(2); 
+                parsedCount++; 
+            }
+        }
+
+        // 4. 溫度 (精確抓取 °C / ℃ / ºc 前面的數值，如 25.49°C)
+        let tempMatch = t.match(/(\d+\.\d+)\s*(?:°\s*c|℃|º\s*c)/i) || 
+                        t.match(/(\d+\.\d+)\s*(?:deg\s*c|temp\b|\bc\b(?!m))/i) || 
+                        t.match(/(?:temp|°c|℃)\s*:?\s*(\d+\.\d+)/i);
         
         if (!tempMatch) {
             // 如果沒看到單位，找「數字 + 空格 + 0」(HANNA 常見誤認)
@@ -426,31 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (tempMatch) { 
             document.getElementById('tempField').value = parseFloat(tempMatch[1]).toFixed(2); 
-            parsedCount++; 
-        }
-
-        // 2. pH (辨識通常準確)
-        const phMatch = t.match(/(\d+\.\d+)\s*(?:ph)/i);
-        if (phMatch) { 
-            document.getElementById('phField').value = parseFloat(phMatch[1]).toFixed(2); 
-            parsedCount++; 
-        }
-
-        // 3. 專屬排除：psi (壓力值，避免誤入鹽度或溫度)
-        const psiMatch = t.match(/(\d+\.\d+)\s*psi/i);
-        const psiVal = psiMatch ? psiMatch[1] : null;
-
-        // 4. 鹽度 (辨識通常準確)
-        const salMatch = t.match(/(\d+\.\d+)\s*(?:psu|ppt|sal)/i);
-        if (salMatch && salMatch[1] !== psiVal) { 
-            document.getElementById('salinityField').value = parseFloat(salMatch[1]).toFixed(2); 
-            parsedCount++; 
-        }
-
-        // 5. ORP (修正：HANNA 常將 ORP 誤認為 0RP 或 RP)
-        const orpMatch = t.match(/(\d+\.?\d*)\s*(?:orp|0rp|rp|mv)/i);
-        if (orpMatch) { 
-            document.getElementById('orpField').value = parseFloat(orpMatch[1]).toFixed(1); 
             parsedCount++; 
         }
 
